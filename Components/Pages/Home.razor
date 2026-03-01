@@ -1,0 +1,330 @@
+﻿@page "/"
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<header>
+    <h1>RCWA Sweep Tool</h1>
+</header>
+
+<div class="main-container">
+    <div class="design-values">
+        <h2>Design Values</h2>
+        
+        <div class="input-field">
+            <label>Spatial Frequency:</label>
+            <input type="number" id="sf" @bind="SpatialFrequency" step="0.01" readonly="@(SelectedReadonlyField == "SF")" />
+            <span class="unit">l/mm</span>
+            <input type="radio" name="readonly-field" value="SF" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "SF")" />
+        </div>
+        
+        <div class="input-field">
+            <label>Center Wavelength:</label>
+            <input type="number" id="cw" @bind="CenterWavelength" step="0.01" />
+            <span class="unit">nm</span>
+        </div>
+        
+        <div class="input-field">
+            <label>Start Wavelength:</label>
+            <input type="number" id="sw" @bind="StartWavelength" step="0.01" />
+            <span class="unit">nm</span>
+        </div>
+        
+        <div class="input-field">
+            <label>End Wavelength:</label>
+            <input type="number" id="ew" @bind="EndWavelength" step="0.01" />
+            <span class="unit">nm</span>
+        </div>
+        
+        <div class="input-field">
+            <label>Angle of Incidence:</label>
+            <input type="number" id="aoi" @bind="AngleOfIncidence" step="0.01" />
+            <span class="unit">deg</span>
+        </div>
+        
+        <div class="input-field">
+            <label>Angle of Diffraction:</label>
+            <input type="number" id="aod" @bind="AngleOfDiffraction" step="0.01" readonly="@(SelectedReadonlyField == "AOD")" />
+            <span class="unit">deg</span>
+            <input type="radio" name="readonly-field" value="AOD" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "AOD")" />
+        </div>
+        
+        <div class="input-field">
+            <label>Bragg Angle:</label>
+            <input type="number" id="ba" @bind="BraggAngle" step="0.01" />
+            <span class="unit">deg</span>
+        </div>
+        
+        <div class="input-field">
+            <label>Bulk Index:</label>
+            <input type="number" id="bi" @bind="BulkIndex" step="0.01" />
+        </div>
+        
+        <div class="input-field">
+            <label>Glass Index:</label>
+            <input type="number" id="gi" @bind="GlassIndex" step="0.01" />
+        </div>
+        
+        <div class="input-field">
+            <label>Delta n:</label>
+            <input type="number" id="dn" @bind="DeltaN" @bind:after="OnDeltaNChanged" step="0.01" />
+        </div>
+        
+        <div class="input-field">
+            <label>Harmonic Order:</label>
+            <input type="number" id="ho" @bind="HarmonicOrder" step="1" />
+        </div>
+        
+        <div class="input-field">
+            <label>Effective Thickness:</label>
+            <input type="number" id="et" @bind="EffectiveThickness" step="0.01" />
+            <span class="unit">µm</span>
+        </div>
+        
+        <div class="input-field">
+            <label>Thick Threshold:</label>
+            <input type="number" id="tt" @bind="ThickThreshold" step="0.01" />
+            <span class="unit">µm</span>
+        </div>
+        
+        <div class="input-field" style="justify-content: flex-end;">
+            <button @onclick="RunBothSweeps" style="padding: 8px 16px; margin-top: 10px; cursor: pointer;">
+                Update Charts
+            </button>
+        </div>
+    </div>
+    
+    <div class="charts-container">
+        <div class="chart-wrapper">
+            <canvas @ref="chart1Canvas"></canvas>
+        </div>
+        <div class="chart-wrapper">
+            <canvas @ref="chart2Canvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <p style="margin-top: 10px; color: @(IsError ? "#d32f2f" : "#388e3c"); font-weight: bold;">@StatusMessage</p>
+    }
+</footer>
+
+@code {
+    private double SpatialFrequency { get; set; } = 1200;
+    private double CenterWavelength { get; set; } = 830;
+    private double StartWavelength { get; set; } = 760;
+    private double EndWavelength { get; set; } = 900;
+    private double AngleOfIncidence { get; set; } = 29.87;
+    private double AngleOfDiffraction { get; set; } = 29.87;
+    private double BraggAngle { get; set; } = 90;
+    private double BulkIndex { get; set; } = 1.33;
+    private double GlassIndex { get; set; } = 1.444;
+    private double DeltaN { get; set; } = 0.111;
+    private double HarmonicOrder { get; set; } = 1;
+    private double EffectiveThickness { get; set; } = 4;
+    private double ThickThreshold { get; set; } = 1.77;
+    private string SelectedReadonlyField { get; set; } = "SF";
+    private string StatusMessage { get; set; } = "";
+    private bool IsError { get; set; } = false;
+    private double[] LastReturnSPol { get; set; } = Array.Empty<double>();
+    private double[] LastReturnPPol { get; set; } = Array.Empty<double>();
+
+    private ElementReference chart1Canvas;
+    private ElementReference chart2Canvas;
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/Pages/Home.razor.js");
+            
+            // Initialize charts and properly await for them to be created
+            await module.InvokeAsync<Task>("initializeCharts", chart1Canvas, chart2Canvas);
+            
+            // Run both sweeps on startup to populate the charts with default values
+            await RunModulationSweep();
+            await RunWavelengthSweep();
+        }
+    }
+
+    private async Task RunBothSweeps()
+    {
+        // Run modulation sweep first and get the optimal delta value
+        double optimalDelta = await RunModulationSweep();
+        
+        // If a crossing was found, update DeltaN before running wavelength sweep
+        if (optimalDelta >= 0)
+        {
+            DeltaN = optimalDelta;
+        }
+        
+        // Run wavelength sweep with the optimized DeltaN
+        await RunWavelengthSweep();
+    }
+
+    private async Task RunWavelengthSweep()
+    {
+        try
+        {
+            // Allocate arrays for results (adjust size as needed based on your DLL)
+            int step = 1;
+            int array_size = (int)((double)(EndWavelength - StartWavelength) / (double)step) + 1;
+            double[] returnSPol = new double[array_size];
+            double[] returnPPol = new double[array_size];
+            // Calculate alphaG based on the angle of incidence and glass index
+            double alphaG = Math.Asin(Math.Sin(AngleOfIncidence * Math.PI / 180) / GlassIndex) * 180 / Math.PI;
+
+            double cw = CenterWavelength / 1000; // Convert nm to µm for DLL
+            double sw = StartWavelength / 1000; // Convert nm to µm for DLL
+            double ew = EndWavelength / 1000; // Convert nm to µm for DLL
+            double st = (double)step / 1000; // Convert nm to µm for DLL
+
+            RcwaDllInterop.wavelength_sweep(
+                SpatialFrequency,
+                EffectiveThickness,
+                DeltaN,
+                BulkIndex,
+                GlassIndex,
+                BraggAngle,
+                (int)HarmonicOrder,
+                cw,
+                sw,
+                ew,
+                st,
+                alphaG,
+                returnSPol,
+                returnPPol
+            );
+
+            // Store arrays for chart update
+            LastReturnSPol = returnSPol;
+            LastReturnPPol = returnPPol;
+
+            // Generate wavelength array
+            double[] wavelengths = new double[array_size];
+            for (int i = 0; i < array_size; i++)
+            {
+                wavelengths[i] = StartWavelength + (i * step);
+            }
+
+            // Update the chart with new data and pass current DeltaN for the vertical line
+            await module.InvokeVoidAsync("updateDiffractionEfficiencyChart", wavelengths, returnSPol, returnPPol);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error in wavelength sweep: {ex.Message}";
+            IsError = true;
+        }
+    }
+
+    private async Task<double> RunModulationSweep()
+    {
+        try
+        {
+            // Display all input parameters before calling the DLL
+            double startDelta = 0.0;
+            double stopDelta = 0.15;
+            double stepDelta = (stopDelta - startDelta) / 200;
+            int array_size = (int)((stopDelta - startDelta) / stepDelta) + 1;
+            
+            double alphaG = Math.Asin(Math.Sin(AngleOfIncidence * Math.PI / 180) / GlassIndex) * 180 / Math.PI;
+            double cw = CenterWavelength / 1000; // Convert nm to µm for DLL
+
+            double[] returnSPol = new double[array_size];
+            double[] returnPPol = new double[array_size];
+
+            RcwaDllInterop.modulation_sweep(
+                SpatialFrequency,
+                EffectiveThickness,
+                DeltaN,
+                BulkIndex,
+                GlassIndex,
+                BraggAngle,
+                (int)HarmonicOrder,
+                cw,
+                startDelta,
+                stopDelta,
+                stepDelta,
+                alphaG,
+                returnSPol,
+                returnPPol
+            );
+
+            // Generate delta array
+            double[] deltaArray = new double[array_size];
+            for (int i = 0; i < array_size; i++)
+            {
+                deltaArray[i] = startDelta + (i * stepDelta);
+            }
+
+            // Find the crossing with the highest value first
+            int highestCrossingIndex = FindHighestValueCrossing(returnSPol, returnPPol);
+            double optimalDelta = -1;
+            if (highestCrossingIndex >= 0)
+            {
+                optimalDelta = deltaArray[highestCrossingIndex];
+            }
+
+            // Update modulation curves chart with new data and current Delta N position
+            await module.InvokeVoidAsync("updateModulationCurvesChart", deltaArray, returnSPol, returnPPol, DeltaN);
+            
+            if (optimalDelta >= 0)
+            {
+                return optimalDelta;
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error in modulation sweep: {ex.Message}";
+            IsError = true;
+        }
+        
+        return -1; // Return -1 if no crossing found or error occurred
+    }
+
+    private int FindHighestValueCrossing(double[] array1, double[] array2)
+    {
+        int highestCrossingIndex = -1;
+        double highestValue = double.MinValue;
+        
+        // Find all crossings between the two arrays
+        for (int i = 0; i < array1.Length - 1; i++)
+        {
+            // Check if there's a crossing between point i and i+1
+            // A crossing occurs when the difference changes sign
+            double diff1 = array1[i] - array2[i];
+            double diff2 = array1[i + 1] - array2[i + 1];
+            
+            // If signs are different (diff1 * diff2 < 0), there's a crossing
+            if (diff1 * diff2 < 0)
+            {
+                // Find the highest value at this crossing point
+                double maxAtCrossing = Math.Max(array1[i], array2[i]);
+                if (maxAtCrossing > highestValue)
+                {
+                    highestValue = maxAtCrossing;
+                    highestCrossingIndex = i;
+                }
+            }
+        }
+        
+        return highestCrossingIndex;
+    }
+
+    private void OnDeltaNChanged()
+    {
+        // When user manually changes Delta N, automatically run wavelength sweep
+        _ = RunWavelengthSweep();
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
+    }
+}
