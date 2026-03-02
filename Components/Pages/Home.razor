@@ -12,14 +12,14 @@
         
         <div class="input-field">
             <label>Spatial Frequency:</label>
-            <input type="number" id="sf" @bind="SpatialFrequency" step="10" min="100" max="4000" readonly="@(SelectedReadonlyField == "SF")" />
+            <input type="number" id="sf" @bind="SpatialFrequency" @bind:after="OnSpatialFrequencyChanged" step="10" min="100" max="4000" readonly="@(SelectedReadonlyField == "SF")" />
             <span class="unit">l/mm</span>
             <input type="radio" name="readonly-field" value="SF" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "SF")" />
         </div>
         
         <div class="input-field">
             <label>Center Wavelength:</label>
-            <input type="number" id="cw" @bind="CenterWavelength" min="300" max="3000" step="10" />
+            <input type="number" id="cw" @bind="CenterWavelength" @bind:after="OnCenterWavelengthChanged" min="300" max="3000" step="10" />
             <span class="unit">nm</span>
         </div>
         
@@ -37,26 +37,26 @@
         
         <div class="input-field">
             <label>Angle of Incidence:</label>
-            <input type="number" id="aoi" @bind="AngleOfIncidence" step="0.01" />
+            <input type="number" id="aoi" @bind="AngleOfIncidence" @bind:after="OnAngleOfIncidenceChanged" step="0.01" />
             <span class="unit">deg</span>
         </div>
         
         <div class="input-field">
             <label>Angle of Diffraction:</label>
-            <input type="number" id="aod" @bind="AngleOfDiffraction" step="0.01" readonly="@(SelectedReadonlyField == "AOD")" />
+            <input type="number" id="aod" @bind="AngleOfDiffraction" @bind:after="OnAngleDiffractionChanged" step="0.01" readonly="@(SelectedReadonlyField == "AOD")" />
             <span class="unit">deg</span>
             <input type="radio" name="readonly-field" value="AOD" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "AOD")" />
         </div>
         
         <div class="input-field">
-            <label>Bragg Angle:</label>
-            <input type="number" id="ba" @bind="BraggAngle" step="0.01" />
+            <label>Bragg Tilt:</label>
+            <input type="number" id="bt" @bind="BraggTilt" step="0.01" readonly />
             <span class="unit">deg</span>
         </div>
         
         <div class="input-field">
             <label>Bulk Index:</label>
-            <input type="number" id="bi" @bind="BulkIndex" min="1.00" max="3.00" step="0.01" />
+            <input type="number" id="bi" @bind="BulkIndex" @bind:after="OnBulkIndexChanged" min="1.00" max="3.00" step="0.01" />
         </div>
         
         <div class="input-field">
@@ -81,8 +81,8 @@
         </div>
         
         <div class="input-field">
-            <label>Thick Threshold:</label>
-            <input type="number" id="tt" @bind="ThickThreshold" step="0.01" readonly />
+            <label>Thick Film Threshold:</label>
+            <input type="number" id="tft" @bind="ThickFilmThreshold" step="0.01" readonly />
             <span class="unit">µm</span>
         </div>
         
@@ -118,13 +118,13 @@
     private double EndWavelength { get; set; } = 900;
     private double AngleOfIncidence { get; set; } = 29.87;
     private double AngleOfDiffraction { get; set; } = 29.87;
-    private double BraggAngle { get; set; } = 90;
+    private double BraggTilt { get; set; } = 90;
     private double BulkIndex { get; set; } = 1.33;
     private double GlassIndex { get; set; } = 1.444;
     private double DeltaN { get; set; } = 0.111;
     private double HarmonicOrder { get; set; } = 1;
     private double EffectiveThickness { get; set; } = 4;
-    private double ThickThreshold { get; set; } = 1.77;
+    private double ThickFilmThreshold { get; set; } = 1.77;
     private string SelectedReadonlyField { get; set; } = "SF";
     private string StatusMessage { get; set; } = "";
     private bool IsError { get; set; } = false;
@@ -191,7 +191,7 @@
             double[] returnSPol = new double[array_size];
             double[] returnPPol = new double[array_size];
             // Calculate alphaG based on the angle of incidence and glass index
-            double alphaG = Math.Asin(Math.Sin(AngleOfIncidence * Math.PI / 180) / GlassIndex) * 180 / Math.PI;
+            double alphaG = Calc.Degrees(Math.Asin(Math.Sin(Calc.Radians(AngleOfIncidence)) / GlassIndex));
 
             double cw = CenterWavelength / 1000; // Convert nm to µm for DLL
             double sw = StartWavelength / 1000; // Convert nm to µm for DLL
@@ -204,7 +204,7 @@
                 DeltaN,
                 BulkIndex,
                 GlassIndex,
-                BraggAngle,
+                BraggTilt,
                 (int)HarmonicOrder,
                 cw,
                 sw,
@@ -246,7 +246,7 @@
             double stepDelta = (stopDelta - startDelta) / 200;
             int array_size = (int)((stopDelta - startDelta) / stepDelta) + 1;
             
-            double alphaG = Math.Asin(Math.Sin(AngleOfIncidence * Math.PI / 180) / GlassIndex) * 180 / Math.PI;
+            double alphaG = Calc.Degrees(Math.Asin(Math.Sin(Calc.Radians(AngleOfIncidence)) / GlassIndex));
             double cw = CenterWavelength / 1000; // Convert nm to µm for DLL
 
             double[] returnSPol = new double[array_size];
@@ -258,7 +258,7 @@
                 DeltaN,
                 BulkIndex,
                 GlassIndex,
-                BraggAngle,
+                BraggTilt,
                 (int)HarmonicOrder,
                 cw,
                 startDelta,
@@ -377,6 +377,96 @@
         _ = RunWavelengthSweep();
     }
 
+    private void UpdateThickFilmThreshold()
+    {
+        // Calculate thick film threshold
+        ThickFilmThreshold = Calc.GetThickFilmThreshold(SpatialFrequency, BraggTilt, BulkIndex, CenterWavelength);
+        
+        // If Thick Film Threshold is greater than Effective Thickness, increase Effective Thickness
+        if (ThickFilmThreshold > EffectiveThickness)
+        {
+            EffectiveThickness = Math.Ceiling(ThickFilmThreshold) + Constants.ET_SAFETY_MARGIN;
+        }
+    }
+
+    private void OnSpatialFrequencyChanged()
+    {
+        if (SelectedReadonlyField == "SF")
+        {
+            // SF is readonly, recalculate it from CW, AOI, and AOD
+            SpatialFrequency = Calc.GetSpatialFrequency(AngleOfIncidence, AngleOfDiffraction, CenterWavelength);
+        }
+        else if (SelectedReadonlyField == "AOD")
+        {
+            // AOD is readonly and SF changed, set symmetric angles
+            double symAngle = Calc.GetSymetricAngles(SpatialFrequency, CenterWavelength);
+            AngleOfIncidence = symAngle;
+            AngleOfDiffraction = symAngle;
+            // Update Bragg Tilt after angles change
+            BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
+        }
+        // Update Thick Film Threshold after SF changes
+        UpdateThickFilmThreshold();
+    }
+
+    private void OnCenterWavelengthChanged()
+    {
+        if (SelectedReadonlyField == "SF")
+        {
+            // SF is readonly, recalculate it from CW, AOI, and AOD
+            SpatialFrequency = Calc.GetSpatialFrequency(AngleOfIncidence, AngleOfDiffraction, CenterWavelength);
+        }
+        else if (SelectedReadonlyField == "AOD")
+        {
+            // AOD is readonly and CW changed, set symmetric angles
+            double symAngle = Calc.GetSymetricAngles(SpatialFrequency, CenterWavelength);
+            AngleOfIncidence = symAngle;
+            AngleOfDiffraction = symAngle;
+            // Update Bragg Tilt after angles change
+            BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
+        }
+        // Update Thick Film Threshold after CW changes
+        UpdateThickFilmThreshold();
+    }
+
+    private void OnAngleOfIncidenceChanged()
+    {
+        if (SelectedReadonlyField == "SF")
+        {
+            // SF is readonly, recalculate it from CW, AOI, and AOD
+            SpatialFrequency = Calc.GetSpatialFrequency(AngleOfIncidence, AngleOfDiffraction, CenterWavelength);
+        }
+        else if (SelectedReadonlyField == "AOD")
+        {
+            // AOD is readonly and AOI changed, update AOD from grating equation
+            AngleOfDiffraction = Calc.GetAOD(SpatialFrequency, CenterWavelength, AngleOfIncidence);
+        }
+        // Update Bragg Tilt after AOI changes
+        BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
+        // Update Thick Film Threshold after BraggTilt changes
+        UpdateThickFilmThreshold();
+    }
+
+    private void OnAngleDiffractionChanged()
+    {
+        if (SelectedReadonlyField == "SF")
+        {
+            // SF is readonly, recalculate it from CW, AOI, and AOD
+            SpatialFrequency = Calc.GetSpatialFrequency(AngleOfIncidence, AngleOfDiffraction, CenterWavelength);
+        }
+        // Update Bragg Tilt after AOD changes
+        BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
+        // Update Thick Film Threshold after BraggTilt changes
+        UpdateThickFilmThreshold();
+    }
+
+    private void OnBulkIndexChanged()
+    {
+        // Update Bragg Tilt when bulk index changes (affects refraction calculation)
+        BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
+        // Update Thick Film Threshold after bulk index changes
+        UpdateThickFilmThreshold();
+    }
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
         if (module is not null)
