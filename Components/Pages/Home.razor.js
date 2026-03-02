@@ -8,6 +8,11 @@ const annotationScript = document.createElement('script');
 annotationScript.src = '/chartjs-plugin-annotation.esm.js';
 document.head.appendChild(annotationScript);
 
+// Import Chart.js zoom plugin from local file (offline support)
+const zoomScript = document.createElement('script');
+zoomScript.src = '/chartjs-plugin-zoom.min.js';
+document.head.appendChild(zoomScript);
+
 let chart1 = null;
 let chart2 = null;
 
@@ -19,6 +24,10 @@ export function initializeCharts(canvas1, canvas2) {
                 // Register the annotation plugin if available
                 if (typeof ChartAnnotation !== 'undefined') {
                     Chart.register(ChartAnnotation);
+                }
+                // Register the zoom plugin if available
+                if (typeof ChartZoom !== 'undefined') {
+                    Chart.register(ChartZoom);
                 }
                 createCharts(canvas1, canvas2);
                 resolve();
@@ -94,6 +103,21 @@ function createCharts(canvas1, canvas2) {
                     position: 'bottom',
                     labels: {
                         color: textColor
+                    }
+                },
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                            speed: 0.1
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'xy'
+                    },
+                    pan: {
+                        enabled: false
                     }
                 }
             },
@@ -175,6 +199,21 @@ function createCharts(canvas1, canvas2) {
                     position: 'bottom',
                     labels: {
                         color: textColor
+                    }
+                },
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                            speed: 0.1
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'xy'
+                    },
+                    pan: {
+                        enabled: false
                     }
                 }
             },
@@ -378,5 +417,13 @@ export function updateModulationCurvesChart(wavelengths, spoData, ppData, curren
         }
         
         chart2.update();
+    }
+}
+
+export function resetZoomForChart(chartNumber) {
+    if (chartNumber === 1 && chart1) {
+        chart1.resetZoom();
+    } else if (chartNumber === 2 && chart2) {
+        chart2.resetZoom();
     }
 }

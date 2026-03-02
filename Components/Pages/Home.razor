@@ -102,9 +102,11 @@
         <div class="charts-container">
             <div class="chart-wrapper">
                 <canvas @ref="chart1Canvas"></canvas>
+                <button class="chart-reset-btn" @onclick="() => ResetZoom(1)" title="Reset zoom">↺</button>
             </div>
             <div class="chart-wrapper">
                 <canvas @ref="chart2Canvas"></canvas>
+                <button class="chart-reset-btn" @onclick="() => ResetZoom(2)" title="Reset zoom">↺</button>
             </div>
         </div>
     </div>
@@ -509,6 +511,15 @@
         // Update Thick Film Threshold after bulk index changes
         UpdateThickFilmThreshold();
     }
+
+    private async Task ResetZoom(int chartNumber)
+    {
+        if (module is not null)
+        {
+            await module.InvokeVoidAsync("resetZoomForChart", chartNumber);
+        }
+    }
+
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
         if (module is not null)

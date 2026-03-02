@@ -144,6 +144,49 @@ header h2 {
 .chart-wrapper {
     width: 650px;
     height: 360px;
+    position: relative;
+}
+
+.chart-reset-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    background-color: rgba(100, 181, 246, 0.8);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 10;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.chart-reset-btn:hover {
+    background-color: rgba(100, 181, 246, 1);
+    opacity: 1;
+}
+
+.chart-reset-btn:active {
+    transform: scale(0.95);
+}
+
+.reset-buttons {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.reset-button {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.9em;
 }
 
 footer {
