@@ -1,6 +1,7 @@
 @page "/raytrace"
 @inject RCWA_Sweep_Tool.Services.DesignParametersService DesignParameters
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <div class="page-wrapper">
     <header>
@@ -61,6 +62,12 @@
                 <input type="number" @bind="DesignParameters.GlassThickness" @bind:after="OnGlassThicknessChanged" min="0.5" max="10.0" step="0.1" />
                 <span class="unit">mm</span>
             </div>
+            
+            <div class="zemax-command-section">
+                <h4>Zemax Command</h4>
+                <textarea class="zemax-command" readonly>@GetZemaxCommand()</textarea>
+                <button class="copy-zemax-btn" @onclick="CopyZemaxToClipboard" title="Copy to clipboard">📋 Copy</button>
+            </div>
         </div>
         
         <div class="content-area">
@@ -69,23 +76,23 @@
                 <!-- Layer backgrounds - Scaled: 25px = 1mm -->
                 <!-- Air left: dynamically calculated to center the stack -->
                 <rect x="0" y="0" width="@AirLeftWidth" height="400" fill="#e3f2fd" />
-                <text x="@(AirLeftWidth/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Air (1.0)</text>
+                <text x="@(AirLeftWidth/2)" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, @(AirLeftWidth/2), 350)">Air (1.0)</text>
                 
                 <!-- Glass 1: dynamic thickness -->
                 <rect x="@AirLeftWidth" y="0" width="@Glass1Width" height="400" fill="#bbdefb" />
-                <text x="@(AirLeftWidth + Glass1Width/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Glass @DesignParameters.GlassThickness.ToString("F1")mm</text>
+                <text x="@(AirLeftWidth + Glass1Width/2)" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, @(AirLeftWidth + Glass1Width/2), 350)">Glass (@DesignParameters.GlassIndex.ToString("F3"))</text>
                 
                 <!-- Film: EffectiveThickness in µm, converted to pixels (with minimum for visibility) -->
                 <rect x="@Glass1Exit" y="0" width="@filmWidthPx" height="400" fill="#90caf9" />
-                <text x="@(Glass1Exit + filmWidthPx/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Film @DesignParameters.EffectiveThickness.ToString("F1")µm</text>
+                <text x="@(Glass1Exit + filmWidthPx/2)" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, @(Glass1Exit + filmWidthPx/2), 350)">Film (@DesignParameters.BulkIndex.ToString("F2"))</text>
                 
                 <!-- Glass 2: dynamic thickness -->
                 <rect x="@FilmExit" y="0" width="@Glass2Width" height="400" fill="#bbdefb" />
-                <text x="@(FilmExit + Glass2Width/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Glass @DesignParameters.GlassThickness.ToString("F1")mm</text>
+                <text x="@(FilmExit + Glass2Width/2)" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, @(FilmExit + Glass2Width/2), 350)">Glass (@DesignParameters.GlassIndex.ToString("F3"))</text>
                 
                 <!-- Air right: equal to left air -->
                 <rect x="@Glass2Exit" y="0" width="@AirRightWidth" height="400" fill="#e3f2fd" />
-                <text x="@(Glass2Exit + AirRightWidth/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Air (1.0)</text>
+                <text x="@(Glass2Exit + AirRightWidth/2)" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90, @(Glass2Exit + AirRightWidth/2), 350)">Air (1.0)</text>
                 
                 <!-- Interface lines -->
                 <line x1="@AirLeftWidth" y1="0" x2="@AirLeftWidth" y2="400" stroke="#333" stroke-width="2" />
@@ -251,5 +258,100 @@
                $"{FilmExit},{filmExitY} " +
                $"{Glass2Exit},{glass2ExitY} " +
                $"{TotalSvgWidth},{exitY}";
+    }
+
+    private string GetZemaxCommand()
+    {
+        // Generate a complete Zemax OpticStudio script with the full optical system
+        // Format: Air - Glass - Film (Holographic Grating) - Glass - Air
+        
+        double filmThicknessMm = DesignParameters.EffectiveThickness / 1000.0; // Convert µm to mm
+        
+        return $"! Holographic Grating Optical System\n" +
+               $"! Generated from RCWA Sweep Tool v{Constants.Version}\n" +
+               $"! Date: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+               $"!\n" +
+               $"! Design Parameters:\n" +
+               $"! Spatial Frequency: {DesignParameters.SpatialFrequency:F1} l/mm\n" +
+               $"! Center Wavelength: {DesignParameters.CenterWavelength:F1} nm\n" +
+               $"! Incident Angle: {DesignParameters.AngleOfIncidence:F2}°\n" +
+               $"! Diffraction Angle: {DesignParameters.AngleOfDiffraction:F2}°\n" +
+               $"! Glass Index: {DesignParameters.GlassIndex:F3}\n" +
+               $"! Glass Thickness: {DesignParameters.GlassThickness:F2} mm\n" +
+               $"! Bulk Index: {DesignParameters.BulkIndex:F2}\n" +
+               $"! Film Thickness: {DesignParameters.EffectiveThickness:F2} µm\n" +
+               $"!\n" +
+               $"! System Setup\n" +
+               $"NEWLENS\n" +
+               $"UNITS MM\n" +
+               $"!\n" +
+               $"! Define Wavelength\n" +
+               $"WAVE {DesignParameters.CenterWavelength / 1000:F4}\n" +
+               $"!\n" +
+               $"! Surface 0: Object at infinity\n" +
+               $"SURP 0 TYPE STANDARD\n" +
+               $"SURP 0 THIC Infinity\n" +
+               $"!\n" +
+               $"! Surface 1: Front of Glass 1\n" +
+               $"INSR 1\n" +
+               $"SURP 1 TYPE STANDARD\n" +
+               $"SURP 1 CURV 0\n" +
+               $"SURP 1 THIC {DesignParameters.GlassThickness:F4}\n" +
+               $"SURP 1 GLAS MISC {DesignParameters.GlassIndex:F4} 0 0 0 0 0 0 0 0 0\n" +
+               $"SURP 1 DIAM 10\n" +
+               $"!\n" +
+               $"! Surface 2: Back of Glass 1 / Front of Film\n" +
+               $"INSR 2\n" +
+               $"SURP 2 TYPE STANDARD\n" +
+               $"SURP 2 CURV 0\n" +
+               $"SURP 2 THIC {filmThicknessMm:F6}\n" +
+               $"SURP 2 GLAS MISC {DesignParameters.BulkIndex:F4} 0 0 0 0 0 0 0 0 0\n" +
+               $"SURP 2 DIAM 10\n" +
+               $"!\n" +
+               $"! Surface 3: Back of Film (Holographic Grating) / Front of Glass 2\n" +
+               $"INSR 3\n" +
+               $"SURP 3 TYPE HOLO\n" +
+               $"SURP 3 CURV 0\n" +
+               $"SURP 3 THIC {DesignParameters.GlassThickness:F4}\n" +
+               $"SURP 3 GLAS MISC {DesignParameters.GlassIndex:F4} 0 0 0 0 0 0 0 0 0\n" +
+               $"SURP 3 DIAM 10\n" +
+               $"! Holographic parameters\n" +
+               $"SURP 3 PAR 1 {1000.0 / DesignParameters.SpatialFrequency:F6}\n" +
+               $"SURP 3 PAR 2 0\n" +
+               $"SURP 3 PAR 3 1\n" +
+               $"SURP 3 PAR 4 0\n" +
+               $"SURP 3 PAR 5 0\n" +
+               $"SURP 3 PAR 6 0\n" +
+               $"!\n" +
+               $"! Surface 4: Back of Glass 2\n" +
+               $"INSR 4\n" +
+               $"SURP 4 TYPE STANDARD\n" +
+               $"SURP 4 CURV 0\n" +
+               $"SURP 4 THIC 50\n" +
+               $"SURP 4 DIAM 10\n" +
+               $"!\n" +
+               $"! Surface 5: Image plane\n" +
+               $"INSR 5\n" +
+               $"SURP 5 TYPE STANDARD\n" +
+               $"SURP 5 CURV 0\n" +
+               $"SURP 5 DIAM 10\n" +
+               $"!\n" +
+               $"! Set incident angle (field angle)\n" +
+               $"FTYP ANGL 0 0 0\n" +
+               $"FWAV 1 1\n" +
+               $"FWGN 1 1\n" +
+               $"FLDY 1 {DesignParameters.AngleOfIncidence:F4}\n" +
+               $"FLDY 2 0\n" +
+               $"!\n" +
+               $"! Update\n" +
+               $"UPDATE\n" +
+               $"!\n" +
+               $"! Expected diffraction angle: {DesignParameters.AngleOfDiffraction:F2}°\n";
+    }
+
+    private async Task CopyZemaxToClipboard()
+    {
+        string command = GetZemaxCommand();
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", command);
     }
 }

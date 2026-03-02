@@ -98,10 +98,9 @@
                 <span class="unit">µm</span>
             </div>
             
-            <div class="input-field" style="justify-content: flex-start;">
-                <button @onclick="RunBothSweeps" style="padding: 8px 16px; margin-top: 10px; margin-left: 188px; cursor: pointer;">
-                    Update Charts
-                </button>
+            <div class="button-row">
+                <button class="reset-defaults-btn-inline" @onclick="ResetToDefaults" title="Reset all values to defaults">Defaults</button>
+                <button class="update-charts-btn" @onclick="RunBothSweeps">Update Charts</button>
             </div>
         </div>
         
@@ -253,6 +252,9 @@
 
     private async Task RunBothSweeps()
     {
+        // Clear any previous status messages
+        StatusMessage = "";
+        
         // Run modulation sweep first and get the optimal delta value
         double optimalDelta = await RunModulationSweep();
         
@@ -634,6 +636,36 @@
         {
             await module.InvokeVoidAsync("setZoomLock", 2, IsChart2ZoomLocked);
         }
+    }
+
+    private void ResetToDefaults()
+    {
+        // Reset all parameters to their default values
+        SpatialFrequency = 1200;
+        CenterWavelength = 830;
+        StartWavelength = 760;
+        EndWavelength = 900;
+        AngleOfIncidence = 29.87;
+        AngleOfDiffraction = 29.87;
+        BraggTilt = 90;
+        BulkIndex = 1.33;
+        GlassIndex = 1.444;
+        DeltaN = 0.112;
+        HarmonicOrder = 1;
+        EffectiveThickness = 4;
+        ThickFilmThreshold = 1.77;
+        SelectedReadonlyField = "SF";
+        DesignParameters.GlassThickness = 3.0;
+        
+        // Update calculated values
+        UpdateThickFilmThreshold();
+        
+        // Update the charts with default values
+        RunBothSweeps();
+        
+        StatusMessage = "All values reset to defaults and charts updated";
+        IsError = false;
+        StateHasChanged();
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

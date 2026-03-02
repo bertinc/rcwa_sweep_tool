@@ -100,9 +100,9 @@ footer p {
 .content-area {
     flex: 1;
     padding: 20px;
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: 4px;
-    background-color: var(--bg-secondary);
+    background-color: transparent;
 }
 
 .content-area h3 {
@@ -115,7 +115,7 @@ footer p {
     height: 400px;
     border: 2px solid var(--border-color);
     border-radius: 4px;
-    background-color: white;
+    background-color: transparent;
     margin-bottom: 20px;
 }
 
@@ -138,4 +138,57 @@ footer p {
 
 .ray-info strong {
     color: var(--text-secondary);
+}
+
+.zemax-command-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.zemax-command-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.zemax-command {
+    width: 100%;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75em;
+    padding: 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    resize: vertical;
+    min-height: 150px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    white-space: pre;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.copy-zemax-btn {
+    align-self: flex-end;
+    padding: 8px 12px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.copy-zemax-btn:hover {
+    background-color: var(--border-color);
+}
+
+.copy-zemax-btn:active {
+    transform: scale(0.98);
 }
