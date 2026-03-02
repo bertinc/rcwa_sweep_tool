@@ -128,7 +128,7 @@
     private double BraggTilt { get; set; } = 90;
     private double BulkIndex { get; set; } = 1.33;
     private double GlassIndex { get; set; } = 1.444;
-    private double DeltaN { get; set; } = 0.111;
+    private double DeltaN { get; set; } = 0.112;
     private double HarmonicOrder { get; set; } = 1;
     private double EffectiveThickness { get; set; } = 4;
     private double ThickFilmThreshold { get; set; } = 1.77;
@@ -137,6 +137,7 @@
     private bool IsError { get; set; } = false;
     private double[] LastReturnSPol { get; set; } = Array.Empty<double>();
     private double[] LastReturnPPol { get; set; } = Array.Empty<double>();
+    private double[] LastWavelengths { get; set; } = Array.Empty<double>();
 
     private ElementReference chart1Canvas;
     private ElementReference chart2Canvas;
@@ -165,7 +166,7 @@
         // If a crossing was found, update DeltaN before running wavelength sweep
         if (optimalDelta >= 0)
         {
-            DeltaN = optimalDelta;
+            DeltaN = Calc.Precision(optimalDelta, Constants.DELTA_SIG);
             // Update the modulation chart to show the red line at the new DeltaN position
             if (module is not null && LastReturnSPol.Length > 0)
             {
@@ -180,7 +181,7 @@
                     deltaArray[i] = startDelta + (i * stepDelta);
                 }
                 
-                await module.InvokeVoidAsync("updateModulationCurvesChart", deltaArray, LastReturnSPol, LastReturnPPol, DeltaN);
+                await module.InvokeVoidAsync("updateModulationCurvesChart", deltaArray, LastReturnSPol, LastReturnPPol, DeltaN, optimalDelta);
             }
         }
         
@@ -239,6 +240,9 @@
             {
                 wavelengths[i] = StartWavelength + (i * step);
             }
+
+            // Store wavelengths for chart updates
+            LastWavelengths = wavelengths;
 
             // Update the chart with new data and pass current DeltaN for the vertical line
             await module.InvokeVoidAsync("updateDiffractionEfficiencyChart", wavelengths, returnSPol, returnPPol, CenterWavelength);
@@ -317,8 +321,8 @@
                 optimalDelta = deltaArray[crossingIndex];
             }
 
-            // Update modulation curves chart with new data and current Delta N position
-            await module.InvokeVoidAsync("updateModulationCurvesChart", deltaArray, returnSPol, returnPPol, DeltaN);
+            // Update modulation curves chart with new data and optimal delta for title
+            await module.InvokeVoidAsync("updateModulationCurvesChart", deltaArray, returnSPol, returnPPol, DeltaN, optimalDelta);
             
             if (optimalDelta >= 0)
             {
@@ -459,6 +463,12 @@
         
         // Update Thick Film Threshold after CW changes
         UpdateThickFilmThreshold();
+        
+        // Update chart line position and title to reflect new center wavelength
+        if (module is not null && LastWavelengths.Length > 0 && LastReturnSPol.Length > 0)
+        {
+            _ = module.InvokeVoidAsync("updateDiffractionEfficiencyChart", LastWavelengths, LastReturnSPol, LastReturnPPol, CenterWavelength);
+        }
     }
 
     private void OnAngleOfIncidenceChanged()

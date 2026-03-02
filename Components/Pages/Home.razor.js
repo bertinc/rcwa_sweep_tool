@@ -237,6 +237,12 @@ export function updateDiffractionEfficiencyChart(wavelengths, spoData, ppData, c
             }
         }
         
+        // Calculate average efficiency at center wavelength
+        const avgEfficiencyAtCenter = ((spoData[closestIndex] + ppData[closestIndex]) / 2) * 100;
+        
+        // Update chart title with average efficiency
+        chart1.options.plugins.title.text = `Efficiency Curves - Avg: ${avgEfficiencyAtCenter.toFixed(1)}% at ${centerWavelength}nm`;
+        
         // Remove existing plugin
         if (chart1.options.plugins.customLine) {
             delete chart1.options.plugins.customLine;
@@ -285,7 +291,7 @@ export function updateDiffractionEfficiencyChart(wavelengths, spoData, ppData, c
     }
 }
 
-export function updateModulationCurvesChart(wavelengths, spoData, ppData, currentDeltaN) {
+export function updateModulationCurvesChart(wavelengths, spoData, ppData, currentDeltaN, optimalDeltaN) {
     if (chart2) {
         // Create wavelength labels formatted to 2 decimal places
         const wavelengthLabels = wavelengths.map(w => w.toFixed(2));
@@ -307,6 +313,13 @@ export function updateModulationCurvesChart(wavelengths, spoData, ppData, curren
         } else {
             chart2.data.datasets[0].data = spoData;
             chart2.data.datasets[1].data = ppData;
+        }
+        
+        // Update chart title with optimal delta
+        if (optimalDeltaN !== undefined && optimalDeltaN >= 0) {
+            chart2.options.plugins.title.text = `Modulation Curves - Optimal ΔN: ${optimalDeltaN.toFixed(3)}`;
+        } else {
+            chart2.options.plugins.title.text = `Modulation Curves - No Optimal ΔN Found`;
         }
         
         // Remove existing plugin

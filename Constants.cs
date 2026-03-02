@@ -33,6 +33,11 @@ public static class Constants
     public const int TFT_SIG = 2;
 
     /// <summary>
+    /// Number of significant digits (decimal places) for Delta N calculations.
+    /// </summary>
+    public const int DELTA_SIG = 3;
+
+    /// <summary>
     /// Safety margin (in micrometers) added to Effective Thickness when it needs to exceed Thick Film Threshold.
     /// </summary>
     public const int ET_SAFETY_MARGIN = 2;
