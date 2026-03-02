@@ -425,6 +425,17 @@
             // Update Bragg Tilt after angles change
             BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
         }
+        
+        // Validate Start and End Wavelengths relative to Center Wavelength
+        if (CenterWavelength > EndWavelength)
+        {
+            EndWavelength = CenterWavelength + 100;
+        }
+        if (CenterWavelength < StartWavelength)
+        {
+            StartWavelength = CenterWavelength - 100;
+        }
+        
         // Update Thick Film Threshold after CW changes
         UpdateThickFilmThreshold();
     }

@@ -87,7 +87,7 @@ function createCharts(canvas1, canvas2) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Diffraction Efficiency',
+                    text: 'Efficiency Curves',
                     color: textColor
                 },
                 legend: {
@@ -101,6 +101,11 @@ function createCharts(canvas1, canvas2) {
                 y: {
                     beginAtZero: true,
                     max: 1.0,
+                    title: {
+                        display: true,
+                        text: 'Diffraction Efficiency',
+                        color: textColor
+                    },
                     ticks: {
                         color: textColor
                     },
@@ -109,6 +114,11 @@ function createCharts(canvas1, canvas2) {
                     }
                 },
                 x: {
+                    title: {
+                        display: true,
+                        text: 'Wavelength (nm)',
+                        color: textColor
+                    },
                     ticks: {
                         color: textColor
                     },
@@ -172,6 +182,11 @@ function createCharts(canvas1, canvas2) {
                 y: {
                     beginAtZero: true,
                     max: 1.0,
+                    title: {
+                        display: true,
+                        text: 'Diffraction Efficiency',
+                        color: textColor
+                    },
                     ticks: {
                         color: textColor
                     },
@@ -180,6 +195,11 @@ function createCharts(canvas1, canvas2) {
                     }
                 },
                 x: {
+                    title: {
+                        display: true,
+                        text: 'Index Modulation',
+                        color: textColor
+                    },
                     ticks: {
                         maxTicksLimit: 16,
                         color: textColor
