@@ -1,3 +1,82 @@
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: var(--bg-secondary);
+    padding: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+}
+
+header h2 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.header-subtitle {
+    margin: 0;
+    padding: 0;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+.main-container {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+    padding: 0 20px;
+    flex: 1;
+}
+
+.design-values {
+    flex: 0 0 auto;
+}
+
+.input-field {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-field input {
+    width: 75px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.input-field label {
+    width: 180px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.unit {
+    margin-left: 8px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+footer {
+    background-color: var(--bg-secondary);
+    padding: 12px;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+footer p {
+    margin: 0;
+}
+
 .nav-link {
     margin-bottom: 20px;
 }

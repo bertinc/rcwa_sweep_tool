@@ -10,44 +10,50 @@
 
     <div class="main-container">
         <div class="design-values">
-            <h3>Design Parameters</h3>
-            
             <div class="nav-link">
                 <a href="/" @onclick="@(() => Navigation.NavigateTo("/"))">← Back to RCWA Sweep</a>
             </div>
-
+            
+            <h3>Design Parameters</h3>
+            
             <div class="input-field">
                 <label>Spatial Frequency:</label>
-                <input type="number" @bind="DesignParameters.SpatialFrequency" step="10" min="100" max="4000" />
+                <input type="number" @bind="DesignParameters.SpatialFrequency" step="10" min="100" max="4000" readonly />
                 <span class="unit">l/mm</span>
             </div>
             
             <div class="input-field">
                 <label>Center Wavelength:</label>
-                <input type="number" @bind="DesignParameters.CenterWavelength" min="300" max="3000" step="10" />
+                <input type="number" @bind="DesignParameters.CenterWavelength" min="300" max="3000" step="10" readonly />
                 <span class="unit">nm</span>
             </div>
             
             <div class="input-field">
                 <label>Angle of Incidence:</label>
-                <input type="number" @bind="DesignParameters.AngleOfIncidence" step="0.01" />
+                <input type="number" @bind="DesignParameters.AngleOfIncidence" step="0.01" readonly />
                 <span class="unit">deg</span>
             </div>
             
             <div class="input-field">
                 <label>Angle of Diffraction:</label>
-                <input type="number" @bind="DesignParameters.AngleOfDiffraction" step="0.01" />
+                <input type="number" @bind="DesignParameters.AngleOfDiffraction" step="0.01" readonly />
                 <span class="unit">deg</span>
             </div>
             
             <div class="input-field">
                 <label>Bulk Index:</label>
-                <input type="number" @bind="DesignParameters.BulkIndex" min="1.00" max="3.00" step="0.01" />
+                <input type="number" @bind="DesignParameters.BulkIndex" min="1.00" max="3.00" step="0.01" readonly />
             </div>
             
             <div class="input-field">
                 <label>Glass Index:</label>
-                <input type="number" @bind="DesignParameters.GlassIndex" min="1.000" max="2.000" step="0.001" />
+                <input type="number" @bind="DesignParameters.GlassIndex" min="1.000" max="2.000" step="0.001" readonly />
+            </div>
+            
+            <div class="input-field">
+                <label>Effective Thickness:</label>
+                <input type="number" @bind="DesignParameters.EffectiveThickness" min="1" max="100" step="0.1" readonly />
+                <span class="unit">µm</span>
             </div>
             
             <div class="input-field">
@@ -153,6 +159,12 @@
     private void OnGlassThicknessChanged()
     {
         // Recalculate ray path when glass thickness changes
+        CalculateRayPath();
+    }
+
+    private void OnAngleChanged()
+    {
+        // Recalculate ray path when angles or indices change
         CalculateRayPath();
     }
 

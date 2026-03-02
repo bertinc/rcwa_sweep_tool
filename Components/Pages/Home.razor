@@ -12,11 +12,11 @@
 
     <div class="main-container">
         <div class="design-values">
-            <h3>Design Values</h3>
-            
             <div class="nav-link">
                 <a href="/raytrace" @onclick="@(() => Navigation.NavigateTo("/raytrace"))">Go to Ray Trace →</a>
             </div>
+            
+            <h3>Design Values</h3>
             
             <div class="input-field">
                 <label>Spatial Frequency:</label>
@@ -525,6 +525,8 @@
         }
         // Update Thick Film Threshold after SF changes
         UpdateThickFilmThreshold();
+        // Force UI update
+        StateHasChanged();
     }
 
     private void OnCenterWavelengthChanged()
@@ -557,6 +559,9 @@
         // Update Thick Film Threshold after CW changes
         UpdateThickFilmThreshold();
         
+        // Force UI update
+        StateHasChanged();
+        
         // Update chart line position and title to reflect new center wavelength
         if (module is not null && LastWavelengths.Length > 0 && LastReturnSPol.Length > 0)
         {
@@ -580,6 +585,8 @@
         BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
         // Update Thick Film Threshold after BraggTilt changes
         UpdateThickFilmThreshold();
+        // Force UI update
+        StateHasChanged();
     }
 
     private void OnAngleDiffractionChanged()
@@ -593,6 +600,8 @@
         BraggTilt = Calc.GetBraggTilt(AngleOfIncidence, AngleOfDiffraction, BulkIndex);
         // Update Thick Film Threshold after BraggTilt changes
         UpdateThickFilmThreshold();
+        // Force UI update
+        StateHasChanged();
     }
 
     private void OnBulkIndexChanged()
