@@ -17,8 +17,13 @@ namespace RCWA_Sweep_Tool
 
             builder.Services.AddMauiBlazorWebView();
 
-            // Register shared services
-            builder.Services.AddSingleton<DesignParametersService>();
+            // Register shared services and load user defaults
+            builder.Services.AddSingleton<DesignParametersService>(sp =>
+            {
+                var service = new DesignParametersService();
+                service.LoadDefaults(); // Load saved defaults on startup
+                return service;
+            });
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

@@ -20,4 +20,46 @@ public class DesignParametersService
     public double ThickFilmThreshold { get; set; } = 1.77;
     public string SelectedReadonlyField { get; set; } = "SF";
     public double GlassThickness { get; set; } = 3.0; // Glass thickness in mm
+
+    /// <summary>
+    /// Save current values as user defaults using MAUI Preferences API
+    /// </summary>
+    public void SaveAsDefaults()
+    {
+        Preferences.Set("Default_SpatialFrequency", SpatialFrequency);
+        Preferences.Set("Default_CenterWavelength", CenterWavelength);
+        Preferences.Set("Default_StartWavelength", StartWavelength);
+        Preferences.Set("Default_EndWavelength", EndWavelength);
+        Preferences.Set("Default_AngleOfIncidence", AngleOfIncidence);
+        Preferences.Set("Default_AngleOfDiffraction", AngleOfDiffraction);
+        Preferences.Set("Default_BulkIndex", BulkIndex);
+        Preferences.Set("Default_GlassIndex", GlassIndex);
+        Preferences.Set("Default_DeltaN", DeltaN);
+        Preferences.Set("Default_HarmonicOrder", HarmonicOrder);
+        Preferences.Set("Default_EffectiveThickness", EffectiveThickness);
+        Preferences.Set("Default_GlassThickness", GlassThickness);
+        Preferences.Set("Default_SelectedReadonlyField", SelectedReadonlyField);
+    }
+
+    /// <summary>
+    /// Load user defaults from MAUI Preferences API, falling back to hardcoded defaults
+    /// </summary>
+    public void LoadDefaults()
+    {
+        SpatialFrequency = Preferences.Get("Default_SpatialFrequency", 1200.0);
+        CenterWavelength = Preferences.Get("Default_CenterWavelength", 830.0);
+        StartWavelength = Preferences.Get("Default_StartWavelength", 760.0);
+        EndWavelength = Preferences.Get("Default_EndWavelength", 900.0);
+        AngleOfIncidence = Preferences.Get("Default_AngleOfIncidence", 29.87);
+        AngleOfDiffraction = Preferences.Get("Default_AngleOfDiffraction", 29.87);
+        BulkIndex = Preferences.Get("Default_BulkIndex", 1.33);
+        GlassIndex = Preferences.Get("Default_GlassIndex", 1.444);
+        DeltaN = Preferences.Get("Default_DeltaN", 0.112);
+        HarmonicOrder = Preferences.Get("Default_HarmonicOrder", 1.0);
+        EffectiveThickness = Preferences.Get("Default_EffectiveThickness", 4.0);
+        GlassThickness = Preferences.Get("Default_GlassThickness", 3.0);
+        SelectedReadonlyField = Preferences.Get("Default_SelectedReadonlyField", "SF");
+        
+        // BraggTilt and ThickFilmThreshold are calculated, not saved
+    }
 }

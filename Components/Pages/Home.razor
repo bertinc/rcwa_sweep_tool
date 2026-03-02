@@ -102,6 +102,10 @@
                 <button class="reset-defaults-btn-inline" @onclick="ResetToDefaults" title="Reset all values to defaults">Defaults</button>
                 <button class="update-charts-btn" @onclick="RunBothSweeps">Update Charts</button>
             </div>
+            
+            <div class="button-row">
+                <button class="save-defaults-btn" @onclick="SaveCurrentAsDefaults" title="Save current values as your defaults">Save</button>
+            </div>
         </div>
         
         <div class="charts-container">
@@ -664,6 +668,16 @@
         RunBothSweeps();
         
         StatusMessage = "All values reset to defaults and charts updated";
+        IsError = false;
+        StateHasChanged();
+    }
+
+    private void SaveCurrentAsDefaults()
+    {
+        // Save current values to persistent storage using MAUI Preferences
+        DesignParameters.SaveAsDefaults();
+        
+        StatusMessage = "Current values saved as your defaults";
         IsError = false;
         StateHasChanged();
     }

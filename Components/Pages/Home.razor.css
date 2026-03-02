@@ -334,3 +334,26 @@ footer p {
 .update-charts-btn:hover {
     background-color: var(--border-color);
 }
+
+.save-defaults-btn {
+    padding: 8px 16px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+    justify-self: end;
+    grid-column: 1;
+}
+
+.save-defaults-btn:hover {
+    background-color: #45a049;
+}
+
+.save-defaults-btn:active {
+    transform: scale(0.98);
+}
