@@ -124,7 +124,7 @@
     </div>
 
     <footer>
-        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
+        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source | <a href="/donation" class="donation-link">❤️ Support Development</a></p>
     </footer>
 </div>
 
@@ -190,56 +190,45 @@
         // Starting point in air
         incidentY = 200;
         
-        // Apply Snell's law at each interface
-        double incidentAngleRad = Calc.Radians(DesignParameters.AngleOfIncidence);
-        
-        // Air to Glass 1 (refraction)
-        double n1 = 1.0;
-        double n2 = DesignParameters.GlassIndex;
-        glass1Angle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(incidentAngleRad)));
+        // Air to Glass 1 (refraction) - using centralized Calc method
+        glass1Angle = Calc.GetRefractionAngle(DesignParameters.AngleOfIncidence, 1.0, DesignParameters.GlassIndex);
         double glass1AngleRad = Calc.Radians(glass1Angle);
         
-        // Calculate y offset in glass layer (75 pixels wide = 3mm)
+        // Calculate y offset in glass layer
         double glass1TravelY = Glass1Width * Math.Tan(glass1AngleRad);
         glass1ExitY = incidentY + glass1TravelY;
         
         // Glass 1 to Film entrance (refraction)
-        n1 = DesignParameters.GlassIndex;
-        n2 = DesignParameters.BulkIndex;
-        double filmEntranceAngle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(glass1AngleRad)));
+        double filmEntranceAngle = Calc.GetRefractionAngle(glass1Angle, DesignParameters.GlassIndex, DesignParameters.BulkIndex);
         
         // **Calculate what angle in FILM corresponds to the desired exit angle in AIR**
         // The AngleOfDiffraction is specified in air, so work backwards:
         // Air → Glass → Film
-        double airDiffractionAngleRad = Calc.Radians(DesignParameters.AngleOfDiffraction);
         
         // Air to Glass angle for diffracted beam
-        double glassOutAngleRad = Math.Asin((1.0 / DesignParameters.GlassIndex) * Math.Sin(airDiffractionAngleRad));
+        double glassOutAngle = Calc.GetRefractionAngle(DesignParameters.AngleOfDiffraction, 1.0, DesignParameters.GlassIndex);
         
         // Glass to Film angle for diffracted beam  
-        double filmDiffractionAngleRad = Math.Asin((DesignParameters.GlassIndex / DesignParameters.BulkIndex) * Math.Sin(glassOutAngleRad));
+        double filmDiffractionAngle = Calc.GetRefractionAngle(glassOutAngle, DesignParameters.GlassIndex, DesignParameters.BulkIndex);
+        double filmDiffractionAngleRad = Calc.Radians(filmDiffractionAngle);
         
-        filmAngle = Calc.Degrees(filmDiffractionAngleRad);
+        filmAngle = filmDiffractionAngle;
         
         // Calculate y offset in film layer (filmWidthPx pixels wide)
         // NEGATE to get correct direction: positive angle = up, negative angle = down
         double filmTravelY = -filmWidthPx * Math.Tan(filmDiffractionAngleRad);
         filmExitY = glass1ExitY + filmTravelY;
         
-        // Film to Glass 2 (refraction) - should give us glassOutAngleRad
-        n1 = DesignParameters.BulkIndex;
-        n2 = DesignParameters.GlassIndex;
-        double glass2Angle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(filmDiffractionAngleRad)));
+        // Film to Glass 2 (refraction)
+        double glass2Angle = Calc.GetRefractionAngle(filmDiffractionAngle, DesignParameters.BulkIndex, DesignParameters.GlassIndex);
         double glass2AngleRad = Calc.Radians(glass2Angle);
         
-        // Calculate y offset in glass 2 layer (75 pixels wide = 3mm)
+        // Calculate y offset in glass 2 layer
         double glass2TravelY = -Glass2Width * Math.Tan(glass2AngleRad);
         glass2ExitY = filmExitY + glass2TravelY;
         
-        // Glass 2 to Air (refraction) - should give us AngleOfDiffraction
-        n1 = DesignParameters.GlassIndex;
-        n2 = 1.0;
-        exitAngle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(glass2AngleRad)));
+        // Glass 2 to Air (refraction)
+        exitAngle = Calc.GetRefractionAngle(glass2Angle, DesignParameters.GlassIndex, 1.0);
     }
 
     private string GetRayPath()

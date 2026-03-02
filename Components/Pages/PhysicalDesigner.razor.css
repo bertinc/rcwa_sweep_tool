@@ -45,11 +45,18 @@ header h2 {
     gap: 8px;
 }
 
-.input-field input {
+.input-field input,
+.input-field select {
     width: 75px;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
+    padding: 4px;
+}
+
+.input-field select {
+    width: 85px;
+    cursor: pointer;
 }
 
 .input-field label {
@@ -64,6 +71,29 @@ header h2 {
     color: var(--text-secondary);
 }
 
+.info-field {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-field label {
+    width: 180px;
+    text-align: right;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
+.info-field .value {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.info-field .value.clear-aperture {
+    color: #ff9800;
+}
+
 footer {
     background-color: var(--bg-secondary);
     padding: 12px;
@@ -75,18 +105,6 @@ footer {
 
 footer p {
     margin: 0;
-}
-
-.donation-link {
-    color: #ff4081;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s ease;
-}
-
-.donation-link:hover {
-    color: #f50057;
-    text-decoration: underline;
 }
 
 .nav-link {
@@ -112,95 +130,52 @@ footer p {
 .content-area {
     flex: 1;
     padding: 20px;
-    border: none;
-    border-radius: 4px;
-    background-color: transparent;
 }
 
 .content-area h3 {
     margin-top: 0;
 }
 
-.ray-trace-canvas {
+.grating-preview {
     width: 100%;
-    max-width: 1000px;
-    height: 400px;
+    max-width: 600px;
+    height: 600px;
     border: 2px solid var(--border-color);
     border-radius: 4px;
-    background-color: transparent;
+    background-color: var(--bg-primary);
     margin-bottom: 20px;
 }
 
-.ray-info {
+.design-info {
     padding: 15px;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
+    max-width: 600px;
 }
 
-.ray-info h4 {
+.design-info h4 {
     margin-top: 0;
     color: var(--text-primary);
 }
 
-.ray-info p {
+.design-info p {
     margin: 8px 0;
     color: var(--text-primary);
 }
 
-.ray-info strong {
+.design-info strong {
     color: var(--text-secondary);
 }
 
-.zemax-command-section {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
+.donation-link {
+    color: #ff4081;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
 }
 
-.zemax-command-section h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-}
-
-.zemax-command {
-    width: 100%;
-    font-family: 'Courier New', monospace;
-    font-size: 0.75em;
-    padding: 8px;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    resize: vertical;
-    min-height: 150px;
-    margin-bottom: 8px;
-    box-sizing: border-box;
-    white-space: pre;
-    overflow-x: auto;
-    overflow-y: auto;
-}
-
-.copy-zemax-btn {
-    align-self: flex-end;
-    padding: 8px 12px;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.2s;
-    white-space: nowrap;
-}
-
-.copy-zemax-btn:hover {
-    background-color: var(--border-color);
-}
-
-.copy-zemax-btn:active {
-    transform: scale(0.98);
+.donation-link:hover {
+    color: #f50057;
+    text-decoration: underline;
 }

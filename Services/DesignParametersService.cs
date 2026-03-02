@@ -21,6 +21,12 @@ public class DesignParametersService
     public string SelectedReadonlyField { get; set; } = "SF";
     public double GlassThickness { get; set; } = 3.0; // Glass thickness in mm
 
+    // Physical Designer properties
+    public string GratingShape { get; set; } = "Round"; // "Round" or "Rectangular"
+    public double Diameter { get; set; } = 25.4; // mm (1 inch default)
+    public double Width { get; set; } = 25.4; // mm
+    public double Height { get; set; } = 25.4; // mm
+
     /// <summary>
     /// Save current values as user defaults using MAUI Preferences API
     /// </summary>
@@ -39,6 +45,10 @@ public class DesignParametersService
         Preferences.Set("Default_EffectiveThickness", EffectiveThickness);
         Preferences.Set("Default_GlassThickness", GlassThickness);
         Preferences.Set("Default_SelectedReadonlyField", SelectedReadonlyField);
+        Preferences.Set("Default_GratingShape", GratingShape);
+        Preferences.Set("Default_Diameter", Diameter);
+        Preferences.Set("Default_Width", Width);
+        Preferences.Set("Default_Height", Height);
     }
 
     /// <summary>
@@ -59,6 +69,10 @@ public class DesignParametersService
         EffectiveThickness = Preferences.Get("Default_EffectiveThickness", 4.0);
         GlassThickness = Preferences.Get("Default_GlassThickness", 3.0);
         SelectedReadonlyField = Preferences.Get("Default_SelectedReadonlyField", "SF");
+        GratingShape = Preferences.Get("Default_GratingShape", "Round");
+        Diameter = Preferences.Get("Default_Diameter", 25.4);
+        Width = Preferences.Get("Default_Width", 25.4);
+        Height = Preferences.Get("Default_Height", 25.4);
         
         // BraggTilt and ThickFilmThreshold are calculated, not saved
     }

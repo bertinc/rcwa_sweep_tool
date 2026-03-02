@@ -1,0 +1,382 @@
+@page "/physicaldesigner"
+@inject RCWA_Sweep_Tool.Services.DesignParametersService DesignParameters
+@inject NavigationManager Navigation
+
+<div class="page-wrapper">
+    <header>
+        <h2>Physical Designer</h2>
+        <p class="header-subtitle">Define physical grating dimensions and geometry</p>
+    </header>
+
+    <div class="main-container">
+        <div class="design-values">
+            <div class="nav-link">
+                <a href="/" @onclick="@(() => Navigation.NavigateTo("/"))">← Back to RCWA Sweep</a>
+            </div>
+            
+            <h3>Optical Parameters</h3>
+            
+            <div class="input-field">
+                <label>Angle of Incidence:</label>
+                <input type="number" @bind="AngleOfIncidence" step="0.01" readonly />
+                <span class="unit">deg</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Angle of Diffraction:</label>
+                <input type="number" @bind="AngleOfDiffraction" step="0.01" readonly />
+                <span class="unit">deg</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Glass Thickness:</label>
+                <input type="number" @bind="GlassThickness" @bind:after="OnGlassThicknessChanged" min="0.5" max="10.0" step="0.1" />
+                <span class="unit">mm</span>
+            </div>
+            
+            <h3>Grating Geometry</h3>
+            
+            <div class="input-field">
+                <label>Shape:</label>
+                <select @bind="GratingShape" @bind:after="OnShapeChanged">
+                    <option value="Round">Round</option>
+                    <option value="Rectangular">Rectangular</option>
+                </select>
+            </div>
+            
+            @if (GratingShape == "Round")
+            {
+                <div class="input-field">
+                    <label>Diameter:</label>
+                    <input type="number" @bind="Diameter" min="1" max="500" step="0.1" @bind:after="OnDimensionChanged" />
+                    <span class="unit">mm</span>
+                </div>
+            }
+            else
+            {
+                <div class="input-field">
+                    <label>Width:</label>
+                    <input type="number" @bind="Width" min="1" max="500" step="0.1" @bind:after="OnDimensionChanged" />
+                    <span class="unit">mm</span>
+                </div>
+                
+                <div class="input-field">
+                    <label>Height:</label>
+                    <input type="number" @bind="Height" min="1" max="500" step="0.1" @bind:after="OnDimensionChanged" />
+                    <span class="unit">mm</span>
+                </div>
+            }
+            
+            <h3>Calculated Properties</h3>
+            
+            @if (GratingShape == "Round")
+            {
+                <div class="info-field">
+                    <label>Usable Aperture:</label>
+                    <span class="value clear-aperture">Ø @CalculateClearAperture().ToString("F2") mm</span>
+                </div>
+                <div class="info-field">
+                    <label>Edge Margin:</label>
+                    <span class="value">@CalculateEdgeMargin().ToString("F2") mm</span>
+                </div>
+                <div class="info-field">
+                    <label>Circumference:</label>
+                    <span class="value">@CalculatePerimeter().ToString("F2") mm</span>
+                </div>
+            }
+            else
+            {
+                <div class="info-field">
+                    <label>Usable Aperture:</label>
+                    <span class="value clear-aperture">@CalculateClearWidth().ToString("F2") × @CalculateClearHeight().ToString("F2") mm</span>
+                </div>
+                <div class="info-field">
+                    <label>Edge Margin:</label>
+                    <span class="value">@CalculateEdgeMargin().ToString("F2") mm</span>
+                </div>
+                <div class="info-field">
+                    <label>Perimeter:</label>
+                    <span class="value">@CalculatePerimeter().ToString("F2") mm</span>
+                </div>
+            }
+        </div>
+        
+        <div class="content-area">
+            <h3>Grating Preview</h3>
+            <svg class="grating-preview" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Background -->
+                <rect x="0" y="0" width="600" height="600" fill="#d0d0d0" />
+                
+                <!-- Grid -->
+                @for (int i = 0; i <= 10; i++)
+                {
+                    <line x1="@(i * 60)" y1="0" x2="@(i * 60)" y2="600" stroke="var(--border-color)" stroke-width="1" opacity="0.3" />
+                    <line x1="0" y1="@(i * 60)" x2="600" y2="@(i * 60)" stroke="var(--border-color)" stroke-width="1" opacity="0.3" />
+                }
+                
+                <!-- Grating shape -->
+                @if (GratingShape == "Round")
+                {
+                    double previewRadius = GetPreviewRadius();
+                    bool textFitsInside = previewRadius > 60; // Need at least 60px radius for text
+                    
+                    <circle cx="300" cy="300" r="@previewRadius" fill="#808080" stroke="#000" stroke-width="1" />
+                    <circle cx="300" cy="300" r="@GetClearPreviewRadius()" fill="#90caf9" />
+                    
+                    @if (textFitsInside)
+                    {
+                        <g>
+                            <text x="300" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333" dy="6">Ø @Diameter.ToString("F1") mm</text>
+                            <text x="300" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ff9800" dy="6">Usable: Ø @CalculateClearAperture().ToString("F1") mm</text>
+                        </g>
+                    }
+                    else
+                    {
+                        <g>
+                            <text x="300" y="@(300 + previewRadius + 20)" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">Ø @Diameter.ToString("F1") mm</text>
+                            <text x="300" y="@(300 + previewRadius + 38)" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ff9800">Usable: Ø @CalculateClearAperture().ToString("F1") mm</text>
+                        </g>
+                    }
+                }
+                else
+                {
+                    double previewWidth = GetPreviewWidth();
+                    double previewHeight = GetPreviewHeight();
+                    double x = 300 - previewWidth / 2;
+                    double y = 300 - previewHeight / 2;
+                    
+                    double clearPreviewWidth = GetClearPreviewWidth();
+                    double clearPreviewHeight = GetClearPreviewHeight();
+                    double clearX = 300 - clearPreviewWidth / 2;
+                    double clearY = 300 - clearPreviewHeight / 2;
+                    
+                    bool textFitsInside = previewHeight > 80; // Need at least 80px height for 3 lines of text
+                    
+                    <rect x="@x" y="@y" width="@previewWidth" height="@previewHeight" fill="#808080" stroke="#000" stroke-width="1" />
+                    <rect x="@clearX" y="@clearY" width="@clearPreviewWidth" height="@clearPreviewHeight" fill="#90caf9" />
+                    
+                    @if (textFitsInside)
+                    {
+                        <g>
+                            <text x="300" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">@Width.ToString("F1") × @Height.ToString("F1") mm</text>
+                            <text x="300" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">(Physical W × H)</text>
+                            <text x="300" y="330" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ff9800">Usable: @CalculateClearWidth().ToString("F1") × @CalculateClearHeight().ToString("F1") mm</text>
+                        </g>
+                    }
+                    else
+                    {
+                        <g>
+                            <text x="300" y="@(300 + previewHeight/2 + 20)" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">@Width.ToString("F1") × @Height.ToString("F1") mm</text>
+                            <text x="300" y="@(300 + previewHeight/2 + 38)" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#333">(Physical W × H)</text>
+                            <text x="300" y="@(300 + previewHeight/2 + 56)" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ff9800">Usable: @CalculateClearWidth().ToString("F1") × @CalculateClearHeight().ToString("F1") mm</text>
+                        </g>
+                    }
+                }
+                
+                <!-- Scale reference -->
+                <line x1="50" y1="550" x2="150" y2="550" stroke="#333" stroke-width="2" />
+                <line x1="50" y1="545" x2="50" y2="555" stroke="#333" stroke-width="2" />
+                <line x1="150" y1="545" x2="150" y2="555" stroke="#333" stroke-width="2" />
+                <text x="100" y="540" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">50 mm</text>
+            </svg>
+            
+            <div class="design-info">
+                <h4>Design Notes</h4>
+                <p><strong>Shape:</strong> @GratingShape grating</p>
+                <p><strong>Physical Dimensions:</strong> @(GratingShape == "Round" ? $"Ø {Diameter:F1} mm" : $"{Width:F1} × {Height:F1} mm")</p>
+                <p><strong>Maximum Usable Area:</strong> <span style="color: #ff9800;">@(GratingShape == "Round" ? $"Ø {CalculateClearAperture():F2} mm" : $"{CalculateClearWidth():F2} × {CalculateClearHeight():F2} mm")</span></p>
+                <p><strong>Optical Angles:</strong> @AngleOfIncidence.ToString("F2")° incident, @AngleOfDiffraction.ToString("F2")° diffracted</p>
+                <p><strong>Substrate:</strong> @GlassThickness.ToString("F2") mm thick glass</p>
+                <p style="margin-top: 10px; font-style: italic; color: #666;">
+                    Maximum usable area accounts for beam displacement through glass at the specified angles. Orange dashed line shows the largest usable aperture without beam clipping.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source | <a href="/donation" class="donation-link">❤️ Support Development</a></p>
+    </footer>
+</div>
+
+@code {
+    // Properties that map to shared service (readonly from Home)
+    private double AngleOfIncidence
+    {
+        get => DesignParameters.AngleOfIncidence;
+        set => DesignParameters.AngleOfIncidence = value;
+    }
+
+    private double AngleOfDiffraction
+    {
+        get => DesignParameters.AngleOfDiffraction;
+        set => DesignParameters.AngleOfDiffraction = value;
+    }
+
+    private double GlassThickness
+    {
+        get => DesignParameters.GlassThickness;
+        set => DesignParameters.GlassThickness = value;
+    }
+
+    private string GratingShape
+    {
+        get => DesignParameters.GratingShape;
+        set => DesignParameters.GratingShape = value;
+    }
+
+    private double Diameter
+    {
+        get => DesignParameters.Diameter;
+        set => DesignParameters.Diameter = value;
+    }
+
+    private double Width
+    {
+        get => DesignParameters.Width;
+        set => DesignParameters.Width = value;
+    }
+
+    private double Height
+    {
+        get => DesignParameters.Height;
+        set => DesignParameters.Height = value;
+    }
+
+    private void OnShapeChanged()
+    {
+        StateHasChanged();
+    }
+
+    private void OnDimensionChanged()
+    {
+        StateHasChanged();
+    }
+
+    private void OnGlassThicknessChanged()
+    {
+        // Glass thickness affects beam displacement calculation
+        StateHasChanged();
+    }
+
+    private double CalculateEdgeMargin()
+    {
+        // Calculate beam displacement (total offset for both sides)
+        double totalOffset = Calc.GetBeamDisplacement(AngleOfIncidence, AngleOfDiffraction, GlassThickness, DesignParameters.GlassIndex);
+        
+        // Edge margin is the offset on one side (half of total lost space)
+        // This is the distance from the edge of the usable aperture to the edge of the physical aperture
+        return totalOffset / 2.0;
+    }
+
+    private double CalculateArea()
+    {
+        if (GratingShape == "Round")
+        {
+            // Area = π × r²
+            double radius = Diameter / 2;
+            return Math.PI * radius * radius;
+        }
+        else
+        {
+            // Area = W × H
+            return Width * Height;
+        }
+    }
+
+    private double CalculatePerimeter()
+    {
+        if (GratingShape == "Round")
+        {
+            // Circumference = π × d
+            return Math.PI * Diameter;
+        }
+        else
+        {
+            // Perimeter = 2(W + H)
+            return 2 * (Width + Height);
+        }
+    }
+
+    private double GetPreviewRadius()
+    {
+        // Scale diameter to fit in preview using constants
+        double scale = Constants.PHYSICAL_DESIGNER_RADIUS_SCALE;
+        return Math.Min(Diameter * scale, Constants.PHYSICAL_DESIGNER_MAX_RADIUS);
+    }
+
+    private double GetPreviewWidth()
+    {
+        // Scale width to fit in preview using constants
+        double scale = Constants.PHYSICAL_DESIGNER_RECT_SCALE;
+        return Math.Min(Width * scale, Constants.PHYSICAL_DESIGNER_MAX_RECT);
+    }
+
+    private double GetPreviewHeight()
+    {
+        // Scale height to fit in preview using constants
+        double scale = Constants.PHYSICAL_DESIGNER_RECT_SCALE;
+        return Math.Min(Height * scale, Constants.PHYSICAL_DESIGNER_MAX_RECT);
+    }
+
+    private double CalculateClearAperture()
+    {
+        // Calculate beam displacement using centralized Calc method
+        double totalOffset = Calc.GetBeamDisplacement(AngleOfIncidence, AngleOfDiffraction, GlassThickness, DesignParameters.GlassIndex);
+        
+        if (GratingShape == "Round")
+        {
+            // Clear diameter = physical diameter - 2 * offset (account for both sides)
+            return Math.Max(Diameter - 2 * totalOffset, 0);
+        }
+        else
+        {
+            // For rectangular, return the smaller dimension minus offset
+            double smallerDim = Math.Min(Width, Height);
+            return Math.Max(smallerDim - 2 * totalOffset, 0);
+        }
+    }
+
+    private double CalculateClearWidth()
+    {
+        if (GratingShape == "Round")
+        {
+            return CalculateClearAperture();
+        }
+        
+        double totalOffset = Calc.GetBeamDisplacement(AngleOfIncidence, AngleOfDiffraction, GlassThickness, DesignParameters.GlassIndex);
+        return Math.Max(Width - 2 * totalOffset, 0);
+    }
+
+    private double CalculateClearHeight()
+    {
+        if (GratingShape == "Round")
+        {
+            return CalculateClearAperture();
+        }
+        
+        double totalOffset = Calc.GetBeamDisplacement(AngleOfIncidence, AngleOfDiffraction, GlassThickness, DesignParameters.GlassIndex);
+        return Math.Max(Height - 2 * totalOffset, 0);
+    }
+
+    private double GetClearPreviewRadius()
+    {
+        double clearDiameter = CalculateClearAperture();
+        double scale = Constants.PHYSICAL_DESIGNER_RADIUS_SCALE;
+        return Math.Min(clearDiameter * scale, Constants.PHYSICAL_DESIGNER_MAX_RADIUS);
+    }
+
+    private double GetClearPreviewWidth()
+    {
+        double clearWidth = CalculateClearWidth();
+        double scale = Constants.PHYSICAL_DESIGNER_RECT_SCALE;
+        return Math.Min(clearWidth * scale, Constants.PHYSICAL_DESIGNER_MAX_RECT);
+    }
+
+    private double GetClearPreviewHeight()
+    {
+        double clearHeight = CalculateClearHeight();
+        double scale = Constants.PHYSICAL_DESIGNER_RECT_SCALE;
+        return Math.Min(clearHeight * scale, Constants.PHYSICAL_DESIGNER_MAX_RECT);
+    }
+}

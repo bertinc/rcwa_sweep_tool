@@ -109,4 +109,121 @@ public static class Calc
         
         return Precision(thickness, Constants.TFT_SIG);
     }
+
+    /// <summary>
+    /// Calculates the refraction angle when light passes from one medium to another using Snell's Law.
+    /// </summary>
+    /// <param name="incidentAngle">The incident angle in degrees.</param>
+    /// <param name="n1">Refractive index of the first medium.</param>
+    /// <param name="n2">Refractive index of the second medium.</param>
+    /// <returns>The refraction angle in degrees.</returns>
+    public static double GetRefractionAngle(double incidentAngle, double n1, double n2)
+    {
+        // Snell's Law: n1 * sin(θ1) = n2 * sin(θ2)
+        // θ2 = arcsin((n1/n2) * sin(θ1))
+        double incidentRad = Radians(incidentAngle);
+        double refractionRad = Math.Asin((n1 / n2) * Math.Sin(incidentRad));
+        return Degrees(refractionRad);
+    }
+
+    /// <summary>
+    /// Calculates the total beam displacement (lateral offset) through a glass substrate
+    /// accounting for refraction at both incident and diffracted angles.
+    /// </summary>
+    /// <param name="aoi">Angle of Incidence in degrees (in air).</param>
+    /// <param name="aod">Angle of Diffraction in degrees (in air).</param>
+    /// <param name="glassThickness">Glass thickness in millimeters.</param>
+    /// <param name="glassIndex">Refractive index of glass.</param>
+    /// <returns>Total lateral beam displacement in millimeters.</returns>
+    public static double GetBeamDisplacement(double aoi, double aod, double glassThickness, double glassIndex)
+    {
+        // Calculate refraction angles in glass using Snell's law
+        double angleInGlassIncident = GetRefractionAngle(aoi, 1.0, glassIndex);
+        double angleInGlassDiffracted = GetRefractionAngle(aod, 1.0, glassIndex);
+        
+        // Calculate lateral displacement through glass for each beam
+        double offset1 = glassThickness * Math.Tan(Radians(angleInGlassIncident));
+        double offset2 = glassThickness * Math.Tan(Radians(angleInGlassDiffracted));
+        
+        // Return total displacement (worst case, both offsets add up)
+        return Math.Abs(offset1) + Math.Abs(offset2);
+    }
+
+    /// <summary>
+    /// Finds the index of the crossing point with the highest value in two arrays.
+    /// A crossing occurs when the difference between array values changes sign.
+    /// </summary>
+    /// <param name="array1">First data array.</param>
+    /// <param name="array2">Second data array.</param>
+    /// <returns>The index of the crossing with the highest value, or -1 if no crossing is found.</returns>
+    public static int FindHighestValueCrossing(double[] array1, double[] array2)
+    {
+        if (array1.Length != array2.Length || array1.Length < 2)
+            return -1;
+
+        int highestCrossingIndex = -1;
+        double highestValue = double.MinValue;
+        
+        // Find all crossings between the two arrays
+        for (int i = 0; i < array1.Length - 1; i++)
+        {
+            // Check if there's a crossing between point i and i+1
+            // A crossing occurs when the difference changes sign
+            double diff1 = array1[i] - array2[i];
+            double diff2 = array1[i + 1] - array2[i + 1];
+            
+            // If signs are different (diff1 * diff2 < 0), there's a crossing
+            if (diff1 * diff2 < 0)
+            {
+                // Find the highest value at this crossing point
+                double maxAtCrossing = Math.Max(array1[i], array2[i]);
+                if (maxAtCrossing > highestValue)
+                {
+                    highestValue = maxAtCrossing;
+                    highestCrossingIndex = i;
+                }
+            }
+        }
+        
+        return highestCrossingIndex;
+    }
+
+    /// <summary>
+    /// Finds the index of the crossing point with the lowest value in two arrays.
+    /// A crossing occurs when the difference between array values changes sign.
+    /// </summary>
+    /// <param name="array1">First data array.</param>
+    /// <param name="array2">Second data array.</param>
+    /// <returns>The index of the crossing with the lowest value, or -1 if no crossing is found.</returns>
+    public static int FindLowestValueCrossing(double[] array1, double[] array2)
+    {
+        if (array1.Length != array2.Length || array1.Length < 2)
+            return -1;
+
+        int lowestCrossingIndex = -1;
+        double lowestValue = double.MaxValue;
+        
+        // Find all crossings between the two arrays
+        for (int i = 0; i < array1.Length - 1; i++)
+        {
+            // Check if there's a crossing between point i and i+1
+            // A crossing occurs when the difference changes sign
+            double diff1 = array1[i] - array2[i];
+            double diff2 = array1[i + 1] - array2[i + 1];
+            
+            // If signs are different (diff1 * diff2 < 0), there's a crossing
+            if (diff1 * diff2 < 0)
+            {
+                // Find the lowest value at this crossing point
+                double maxAtCrossing = Math.Max(array1[i], array2[i]);
+                if (maxAtCrossing < lowestValue)
+                {
+                    lowestValue = maxAtCrossing;
+                    lowestCrossingIndex = i;
+                }
+            }
+        }
+        
+        return lowestCrossingIndex;
+    }
 }

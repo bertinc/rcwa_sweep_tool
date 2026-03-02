@@ -16,6 +16,10 @@
                 <a href="/raytrace" @onclick="@(() => Navigation.NavigateTo("/raytrace"))">Go to Ray Trace →</a>
             </div>
             
+            <div class="nav-link">
+                <a href="/physicaldesigner" @onclick="@(() => Navigation.NavigateTo("/physicaldesigner"))">Go to Physical Designer →</a>
+            </div>
+            
             <h3>Design Values</h3>
             
             <div class="input-field">
@@ -133,7 +137,7 @@
     </div>
 
     <footer>
-        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
+        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source | <a href="/donation" class="donation-link">❤️ Support Development</a></p>
         @if (!string.IsNullOrEmpty(StatusMessage))
         {
             <p class="@(IsError ? "status-error" : "status-success")">@StatusMessage</p>
@@ -408,11 +412,11 @@
             int crossingIndex = -1;
             if (HarmonicOrder == 0)
             {
-                crossingIndex = FindLowestValueCrossing(returnSPol, returnPPol);
+                crossingIndex = Calc.FindLowestValueCrossing(returnSPol, returnPPol);
             }
             else
             {
-                crossingIndex = FindHighestValueCrossing(returnSPol, returnPPol);
+                crossingIndex = Calc.FindHighestValueCrossing(returnSPol, returnPPol);
             }
             double optimalDelta = -1;
             if (crossingIndex >= 0)
@@ -435,64 +439,6 @@
         }
         
         return -1; // Return -1 if no crossing found or error occurred
-    }
-
-    private int FindHighestValueCrossing(double[] array1, double[] array2)
-    {
-        int highestCrossingIndex = -1;
-        double highestValue = double.MinValue;
-        
-        // Find all crossings between the two arrays
-        for (int i = 0; i < array1.Length - 1; i++)
-        {
-            // Check if there's a crossing between point i and i+1
-            // A crossing occurs when the difference changes sign
-            double diff1 = array1[i] - array2[i];
-            double diff2 = array1[i + 1] - array2[i + 1];
-            
-            // If signs are different (diff1 * diff2 < 0), there's a crossing
-            if (diff1 * diff2 < 0)
-            {
-                // Find the highest value at this crossing point
-                double maxAtCrossing = Math.Max(array1[i], array2[i]);
-                if (maxAtCrossing > highestValue)
-                {
-                    highestValue = maxAtCrossing;
-                    highestCrossingIndex = i;
-                }
-            }
-        }
-        
-        return highestCrossingIndex;
-    }
-
-    private int FindLowestValueCrossing(double[] array1, double[] array2)
-    {
-        int lowestCrossingIndex = -1;
-        double lowestValue = double.MaxValue;
-        
-        // Find all crossings between the two arrays
-        for (int i = 0; i < array1.Length - 1; i++)
-        {
-            // Check if there's a crossing between point i and i+1
-            // A crossing occurs when the difference changes sign
-            double diff1 = array1[i] - array2[i];
-            double diff2 = array1[i + 1] - array2[i + 1];
-            
-            // If signs are different (diff1 * diff2 < 0), there's a crossing
-            if (diff1 * diff2 < 0)
-            {
-                // Find the lowest value at this crossing point
-                double maxAtCrossing = Math.Max(array1[i], array2[i]);
-                if (maxAtCrossing < lowestValue)
-                {
-                    lowestValue = maxAtCrossing;
-                    lowestCrossingIndex = i;
-                }
-            }
-        }
-        
-        return lowestCrossingIndex;
     }
 
     private void OnDeltaNChanged()

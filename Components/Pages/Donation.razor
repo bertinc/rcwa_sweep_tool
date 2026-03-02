@@ -1,0 +1,84 @@
+@page "/donation"
+@inject NavigationManager Navigation
+
+<div class="page-wrapper">
+    <header>
+        <h2>Support the Project</h2>
+        <p class="header-subtitle">Help keep this tool free and open source</p>
+    </header>
+
+    <div class="donation-container">
+        <div class="donation-content">
+            <div class="nav-link">
+                <a href="/" @onclick="@(() => Navigation.NavigateTo("/"))">← Back to RCWA Sweep</a>
+            </div>
+
+            <div class="author-section">
+                <h3>About the Author</h3>
+                <p>
+                    The RCWA Sweep Tool was created to provide optical engineers and researchers with 
+                    a free, accessible solution for holographic grating design and analysis. This tool 
+                    combines rigorous coupled-wave analysis (RCWA) with practical design workflows to 
+                    help you optimize your optical systems.
+                </p>
+                <p>
+                    Development of this tool represents hundreds of hours of research, coding, testing, 
+                    and refinement. By keeping it free and open source, I hope to contribute to the 
+                    optical engineering community and make advanced simulation tools accessible to everyone.
+                </p>
+            </div>
+
+            <div class="donation-section">
+                <h3>Support Development</h3>
+                <p>
+                    If you find this tool valuable for your work or research, please consider showing your
+                    appreciation. This development is a labor of love. No donations are needed to keep this
+                    tool around and free. However, if you would like to contribute, you have my thanks!
+                </p>
+
+                <div class="venmo-section">
+                    <h4>Donate via Venmo</h4>
+                    <p class="venmo-handle"><strong>@@R_Rallison</strong></p>
+                    
+                    <div class="qr-code-container">
+                        <img src="/images/venmo-qr.png" alt="Venmo QR Code - @@R_Rallison" class="qr-code" />
+                    </div>
+                </div>
+
+                <div class="thank-you">
+                    <p>
+                        ❤️ <strong>Thank you for your support!</strong> I hope you find this tool helpful or the source
+                        code a good starting point for your own projects.
+                    </p>
+                </div>
+            </div>
+
+            <div class="features-section">
+                <h3>How is your donation used?</h3>
+                <p>
+                    I can promise you one thing. Any donations made to me through Venmo will be spent doing something creative or innovative. I have
+                    a wood shop. I love to build things. Maybe your donation will go towards my next piece of custom furnature. I can't tell you precicly
+                    how it will be spent, but I gaurantee it will be something fun, helpful, interesting, and made with my own two hands. And you will
+                    have my thanks for helping me to continue to do the things that bring me joy.
+                </p>
+            </div>
+
+            <div class="open-source-section">
+                <h3>Open Source</h3>
+                <p>
+                    This tool is completely open source and available on GitHub. Feel free to contribute, 
+                    report issues, or fork the project for your own needs.
+                </p>
+                <p>
+                    <a href="https://github.com/bertinc/rcwa_sweep_tool" target="_blank" rel="noopener noreferrer" class="github-link">
+                        🔗 View on GitHub
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
+    </footer>
+</div>
