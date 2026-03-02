@@ -19,4 +19,5 @@ public class DesignParametersService
     public double EffectiveThickness { get; set; } = 4;
     public double ThickFilmThreshold { get; set; } = 1.77;
     public string SelectedReadonlyField { get; set; } = "SF";
+    public double GlassThickness { get; set; } = 3.0; // Glass thickness in mm
 }

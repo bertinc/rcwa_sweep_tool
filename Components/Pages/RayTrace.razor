@@ -49,12 +49,64 @@
                 <label>Glass Index:</label>
                 <input type="number" @bind="DesignParameters.GlassIndex" min="1.000" max="2.000" step="0.001" />
             </div>
+            
+            <div class="input-field">
+                <label>Glass Thickness:</label>
+                <input type="number" @bind="DesignParameters.GlassThickness" @bind:after="OnGlassThicknessChanged" min="0.5" max="10.0" step="0.1" />
+                <span class="unit">mm</span>
+            </div>
         </div>
         
         <div class="content-area">
             <h3>Ray Trace Visualization</h3>
-            <p>Ray tracing functionality will be implemented here.</p>
-            <p>Current design parameters are shared with the RCWA Sweep page.</p>
+            <svg class="ray-trace-canvas" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Layer backgrounds - Scaled: 25px = 1mm -->
+                <!-- Air left: dynamically calculated to center the stack -->
+                <rect x="0" y="0" width="@AirLeftWidth" height="400" fill="#e3f2fd" />
+                <text x="@(AirLeftWidth/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Air (1.0)</text>
+                
+                <!-- Glass 1: dynamic thickness -->
+                <rect x="@AirLeftWidth" y="0" width="@Glass1Width" height="400" fill="#bbdefb" />
+                <text x="@(AirLeftWidth + Glass1Width/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Glass @DesignParameters.GlassThickness.ToString("F1")mm</text>
+                
+                <!-- Film: EffectiveThickness in µm, converted to pixels (with minimum for visibility) -->
+                <rect x="@Glass1Exit" y="0" width="@filmWidthPx" height="400" fill="#90caf9" />
+                <text x="@(Glass1Exit + filmWidthPx/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Film @DesignParameters.EffectiveThickness.ToString("F1")µm</text>
+                
+                <!-- Glass 2: dynamic thickness -->
+                <rect x="@FilmExit" y="0" width="@Glass2Width" height="400" fill="#bbdefb" />
+                <text x="@(FilmExit + Glass2Width/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Glass @DesignParameters.GlassThickness.ToString("F1")mm</text>
+                
+                <!-- Air right: equal to left air -->
+                <rect x="@Glass2Exit" y="0" width="@AirRightWidth" height="400" fill="#e3f2fd" />
+                <text x="@(Glass2Exit + AirRightWidth/2)" y="390" text-anchor="middle" font-size="12" fill="#666">Air (1.0)</text>
+                
+                <!-- Interface lines -->
+                <line x1="@AirLeftWidth" y1="0" x2="@AirLeftWidth" y2="400" stroke="#333" stroke-width="2" />
+                <line x1="@Glass1Exit" y1="0" x2="@Glass1Exit" y2="400" stroke="#333" stroke-width="2" />
+                <line x1="@FilmExit" y1="0" x2="@FilmExit" y2="400" stroke="#333" stroke-width="2" />
+                <line x1="@Glass2Exit" y1="0" x2="@Glass2Exit" y2="400" stroke="#333" stroke-width="2" />
+                
+                <!-- Ray path -->
+                <polyline points="@GetRayPath()" fill="none" stroke="red" stroke-width="2" />
+                
+                <!-- Normal lines at interfaces -->
+                <line x1="@AirLeftWidth" y1="@(incidentY - 50)" x2="@AirLeftWidth" y2="@(incidentY + 50)" stroke="gray" stroke-width="1" stroke-dasharray="3,3" />
+                <line x1="@Glass1Exit" y1="@(glass1ExitY - 50)" x2="@Glass1Exit" y2="@(glass1ExitY + 50)" stroke="gray" stroke-width="1" stroke-dasharray="3,3" />
+                <line x1="@FilmExit" y1="@(filmExitY - 50)" x2="@FilmExit" y2="@(filmExitY + 50)" stroke="gray" stroke-width="1" stroke-dasharray="3,3" />
+                <line x1="@Glass2Exit" y1="@(glass2ExitY - 50)" x2="@Glass2Exit" y2="@(glass2ExitY + 50)" stroke="gray" stroke-width="1" stroke-dasharray="3,3" />
+            </svg>
+            
+            <div class="ray-info">
+                <h4>Ray Trace Information</h4>
+                <p><strong>Incident Angle (Air):</strong> @DesignParameters.AngleOfIncidence.ToString("F2")°</p>
+                <p><strong>Refracted Angle (Glass):</strong> @glass1Angle.ToString("F2")°</p>
+                <p><strong>Diffraction Angle (Film - 1st Order):</strong> @filmAngle.ToString("F2")°</p>
+                <p><strong>Exit Angle (Air):</strong> @exitAngle.ToString("F2")°</p>
+                <p style="margin-top: 10px; font-style: italic; color: #666;">
+                    The ray refracts at glass interfaces and diffracts at the holographic grating in the film.
+                </p>
+            </div>
         </div>
     </div>
 
@@ -64,8 +116,128 @@
 </div>
 
 @code {
+    private double incidentY = 200;
+    private double glass1ExitY = 200;
+    private double filmExitY = 200;
+    private double glass2ExitY = 200;
+    private double glass1Angle = 0;
+    private double filmAngle = 0;
+    private double exitAngle = 0;
+    private double filmWidthPx = 40; // Film width in pixels (calculated from effective thickness)
+
+    // Layer positions - calculated to center the material stack
+    private const double TotalSvgWidth = 1000; // Increased from 800
+    private double Glass1Width => DesignParameters.GlassThickness * 25; // Glass thickness in mm × 25px/mm
+    private double Glass2Width => DesignParameters.GlassThickness * 25; // Glass thickness in mm × 25px/mm
+    
+    private double AirWidth => (TotalSvgWidth - Glass1Width - filmWidthPx - Glass2Width) / 2;
+    private double AirLeftWidth => AirWidth;
+    private double Glass1Exit => AirLeftWidth + Glass1Width;
+    private double FilmExit => Glass1Exit + filmWidthPx;
+    private double Glass2Exit => FilmExit + Glass2Width;
+    private double AirRightWidth => AirWidth;
+
     protected override void OnInitialized()
     {
         // Parameters are automatically loaded from the shared service
+        CalculateFilmWidth();
+        CalculateRayPath();
+    }
+
+    protected override void OnParametersSet()
+    {
+        CalculateFilmWidth();
+        CalculateRayPath();
+    }
+
+    private void OnGlassThicknessChanged()
+    {
+        // Recalculate ray path when glass thickness changes
+        CalculateRayPath();
+    }
+
+    private void CalculateFilmWidth()
+    {
+        // Scale: 25 pixels = 1mm = 1000 µm
+        // filmWidthPx = EffectiveThickness (µm) × (25px / 1000µm)
+        double calculatedWidth = DesignParameters.EffectiveThickness * 0.025;
+        
+        // Use minimum of 40px for visibility (even if film is thinner in reality)
+        filmWidthPx = Math.Max(40, calculatedWidth);
+    }
+
+    private void CalculateRayPath()
+    {
+        // Starting point in air
+        incidentY = 200;
+        
+        // Apply Snell's law at each interface
+        double incidentAngleRad = Calc.Radians(DesignParameters.AngleOfIncidence);
+        
+        // Air to Glass 1 (refraction)
+        double n1 = 1.0;
+        double n2 = DesignParameters.GlassIndex;
+        glass1Angle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(incidentAngleRad)));
+        double glass1AngleRad = Calc.Radians(glass1Angle);
+        
+        // Calculate y offset in glass layer (75 pixels wide = 3mm)
+        double glass1TravelY = Glass1Width * Math.Tan(glass1AngleRad);
+        glass1ExitY = incidentY + glass1TravelY;
+        
+        // Glass 1 to Film entrance (refraction)
+        n1 = DesignParameters.GlassIndex;
+        n2 = DesignParameters.BulkIndex;
+        double filmEntranceAngle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(glass1AngleRad)));
+        
+        // **Calculate what angle in FILM corresponds to the desired exit angle in AIR**
+        // The AngleOfDiffraction is specified in air, so work backwards:
+        // Air → Glass → Film
+        double airDiffractionAngleRad = Calc.Radians(DesignParameters.AngleOfDiffraction);
+        
+        // Air to Glass angle for diffracted beam
+        double glassOutAngleRad = Math.Asin((1.0 / DesignParameters.GlassIndex) * Math.Sin(airDiffractionAngleRad));
+        
+        // Glass to Film angle for diffracted beam  
+        double filmDiffractionAngleRad = Math.Asin((DesignParameters.GlassIndex / DesignParameters.BulkIndex) * Math.Sin(glassOutAngleRad));
+        
+        filmAngle = Calc.Degrees(filmDiffractionAngleRad);
+        
+        // Calculate y offset in film layer (filmWidthPx pixels wide)
+        // NEGATE to get correct direction: positive angle = up, negative angle = down
+        double filmTravelY = -filmWidthPx * Math.Tan(filmDiffractionAngleRad);
+        filmExitY = glass1ExitY + filmTravelY;
+        
+        // Film to Glass 2 (refraction) - should give us glassOutAngleRad
+        n1 = DesignParameters.BulkIndex;
+        n2 = DesignParameters.GlassIndex;
+        double glass2Angle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(filmDiffractionAngleRad)));
+        double glass2AngleRad = Calc.Radians(glass2Angle);
+        
+        // Calculate y offset in glass 2 layer (75 pixels wide = 3mm)
+        double glass2TravelY = -Glass2Width * Math.Tan(glass2AngleRad);
+        glass2ExitY = filmExitY + glass2TravelY;
+        
+        // Glass 2 to Air (refraction) - should give us AngleOfDiffraction
+        n1 = DesignParameters.GlassIndex;
+        n2 = 1.0;
+        exitAngle = Calc.Degrees(Math.Asin((n1 / n2) * Math.Sin(glass2AngleRad)));
+    }
+
+    private string GetRayPath()
+    {
+        // Incident ray in air
+        double startX = 0;
+        double startY = incidentY - AirLeftWidth * Math.Tan(Calc.Radians(DesignParameters.AngleOfIncidence));
+        
+        // Exit ray continues through right air layer
+        double exitY = glass2ExitY - AirRightWidth * Math.Tan(Calc.Radians(exitAngle));
+        
+        // Build the polyline path through all layers
+        return $"{startX},{startY} " +
+               $"{AirLeftWidth},{incidentY} " +
+               $"{Glass1Exit},{glass1ExitY} " +
+               $"{FilmExit},{filmExitY} " +
+               $"{Glass2Exit},{glass2ExitY} " +
+               $"{TotalSvgWidth},{exitY}";
     }
 }

@@ -29,3 +29,34 @@
 .content-area h3 {
     margin-top: 0;
 }
+
+.ray-trace-canvas {
+    width: 100%;
+    max-width: 1000px;
+    height: 400px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    margin-bottom: 20px;
+}
+
+.ray-info {
+    padding: 15px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.ray-info h4 {
+    margin-top: 0;
+    color: var(--text-primary);
+}
+
+.ray-info p {
+    margin: 8px 0;
+    color: var(--text-primary);
+}
+
+.ray-info strong {
+    color: var(--text-secondary);
+}
