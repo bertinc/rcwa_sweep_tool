@@ -1,0 +1,71 @@
+@page "/raytrace"
+@inject RCWA_Sweep_Tool.Services.DesignParametersService DesignParameters
+@inject NavigationManager Navigation
+
+<div class="page-wrapper">
+    <header>
+        <h2>Ray Trace Analysis</h2>
+        <p class="header-subtitle">Optical ray tracing for holographic gratings</p>
+    </header>
+
+    <div class="main-container">
+        <div class="design-values">
+            <h3>Design Parameters</h3>
+            
+            <div class="nav-link">
+                <a href="/" @onclick="@(() => Navigation.NavigateTo("/"))">← Back to RCWA Sweep</a>
+            </div>
+
+            <div class="input-field">
+                <label>Spatial Frequency:</label>
+                <input type="number" @bind="DesignParameters.SpatialFrequency" step="10" min="100" max="4000" />
+                <span class="unit">l/mm</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Center Wavelength:</label>
+                <input type="number" @bind="DesignParameters.CenterWavelength" min="300" max="3000" step="10" />
+                <span class="unit">nm</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Angle of Incidence:</label>
+                <input type="number" @bind="DesignParameters.AngleOfIncidence" step="0.01" />
+                <span class="unit">deg</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Angle of Diffraction:</label>
+                <input type="number" @bind="DesignParameters.AngleOfDiffraction" step="0.01" />
+                <span class="unit">deg</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Bulk Index:</label>
+                <input type="number" @bind="DesignParameters.BulkIndex" min="1.00" max="3.00" step="0.01" />
+            </div>
+            
+            <div class="input-field">
+                <label>Glass Index:</label>
+                <input type="number" @bind="DesignParameters.GlassIndex" min="1.000" max="2.000" step="0.001" />
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <h3>Ray Trace Visualization</h3>
+            <p>Ray tracing functionality will be implemented here.</p>
+            <p>Current design parameters are shared with the RCWA Sweep page.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
+    </footer>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Parameters are automatically loaded from the shared service
+    }
+}

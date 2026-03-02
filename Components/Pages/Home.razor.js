@@ -108,11 +108,11 @@ function createCharts(canvas1, canvas2) {
                 zoom: {
                     zoom: {
                         wheel: {
-                            enabled: true,
+                            enabled: false,
                             speed: 0.1
                         },
                         pinch: {
-                            enabled: true
+                            enabled: false
                         },
                         mode: 'xy'
                     },
@@ -204,11 +204,11 @@ function createCharts(canvas1, canvas2) {
                 zoom: {
                     zoom: {
                         wheel: {
-                            enabled: true,
+                            enabled: false,
                             speed: 0.1
                         },
                         pinch: {
-                            enabled: true
+                            enabled: false
                         },
                         mode: 'xy'
                     },
@@ -425,5 +425,23 @@ export function resetZoomForChart(chartNumber) {
         chart1.resetZoom();
     } else if (chartNumber === 2 && chart2) {
         chart2.resetZoom();
+    }
+}
+
+export function setZoomLock(chartNumber, isLocked) {
+    const chart = chartNumber === 1 ? chart1 : chart2;
+    if (!chart) return;
+    
+    // Update zoom enabled state
+    if (chart.options.plugins.zoom && chart.options.plugins.zoom.zoom) {
+        // Enable or disable zoom based on lock state
+        const zoomEnabled = !isLocked;
+        chart.options.plugins.zoom.zoom.wheel.enabled = zoomEnabled;
+        chart.options.plugins.zoom.zoom.pinch.enabled = zoomEnabled;
+        
+        // Force chart to update with the new options
+        chart.update('default');
+        
+        console.log(`Chart ${chartNumber} zoom ${zoomEnabled ? 'enabled' : 'disabled'}`);
     }
 }

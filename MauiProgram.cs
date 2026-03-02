@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using RCWA_Sweep_Tool.Services;
 
 namespace RCWA_Sweep_Tool
 {
@@ -15,6 +16,9 @@ namespace RCWA_Sweep_Tool
                 });
 
             builder.Services.AddMauiBlazorWebView();
+
+            // Register shared services
+            builder.Services.AddSingleton<DesignParametersService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

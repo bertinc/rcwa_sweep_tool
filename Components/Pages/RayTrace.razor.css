@@ -1,0 +1,31 @@
+.nav-link {
+    margin-bottom: 20px;
+}
+
+.nav-link a {
+    color: #0066cc;
+    text-decoration: none;
+    font-size: 1em;
+    padding: 8px 12px;
+    border: 1px solid #0066cc;
+    border-radius: 4px;
+    display: inline-block;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link a:hover {
+    background-color: #0066cc;
+    color: white;
+}
+
+.content-area {
+    flex: 1;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-secondary);
+}
+
+.content-area h3 {
+    margin-top: 0;
+}

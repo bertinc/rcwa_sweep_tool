@@ -1,6 +1,8 @@
 ﻿@page "/"
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject RCWA_Sweep_Tool.Services.DesignParametersService DesignParameters
+@inject NavigationManager Navigation
 
 <div class="page-wrapper">
     <header>
@@ -11,6 +13,10 @@
     <div class="main-container">
         <div class="design-values">
             <h3>Design Values</h3>
+            
+            <div class="nav-link">
+                <a href="/raytrace" @onclick="@(() => Navigation.NavigateTo("/raytrace"))">Go to Ray Trace →</a>
+            </div>
             
             <div class="input-field">
                 <label>Spatial Frequency:</label>
@@ -102,11 +108,23 @@
         <div class="charts-container">
             <div class="chart-wrapper">
                 <canvas @ref="chart1Canvas"></canvas>
-                <button class="chart-reset-btn" @onclick="() => ResetZoom(1)" title="Reset zoom">↺</button>
+                <div class="chart-controls">
+                    <label class="chart-lock-label" title="Lock/Unlock zoom">
+                        <input type="checkbox" @bind="IsChart1ZoomLocked" @bind:after="OnChart1ZoomLockChanged" />
+                        🔒
+                    </label>
+                    <button class="chart-reset-btn" @onclick="() => ResetZoom(1)" title="Reset zoom">↺</button>
+                </div>
             </div>
             <div class="chart-wrapper">
                 <canvas @ref="chart2Canvas"></canvas>
-                <button class="chart-reset-btn" @onclick="() => ResetZoom(2)" title="Reset zoom">↺</button>
+                <div class="chart-controls">
+                    <label class="chart-lock-label" title="Lock/Unlock zoom">
+                        <input type="checkbox" @bind="IsChart2ZoomLocked" @bind:after="OnChart2ZoomLockChanged" />
+                        🔒
+                    </label>
+                    <button class="chart-reset-btn" @onclick="() => ResetZoom(2)" title="Reset zoom">↺</button>
+                </div>
             </div>
         </div>
     </div>
@@ -121,29 +139,102 @@
 </div>
 
 @code {
-    private double SpatialFrequency { get; set; } = 1200;
-    private double CenterWavelength { get; set; } = 830;
-    private double StartWavelength { get; set; } = 760;
-    private double EndWavelength { get; set; } = 900;
-    private double AngleOfIncidence { get; set; } = 29.87;
-    private double AngleOfDiffraction { get; set; } = 29.87;
-    private double BraggTilt { get; set; } = 90;
-    private double BulkIndex { get; set; } = 1.33;
-    private double GlassIndex { get; set; } = 1.444;
-    private double DeltaN { get; set; } = 0.112;
-    private double HarmonicOrder { get; set; } = 1;
-    private double EffectiveThickness { get; set; } = 4;
-    private double ThickFilmThreshold { get; set; } = 1.77;
-    private string SelectedReadonlyField { get; set; } = "SF";
     private string StatusMessage { get; set; } = "";
     private bool IsError { get; set; } = false;
     private double[] LastReturnSPol { get; set; } = Array.Empty<double>();
     private double[] LastReturnPPol { get; set; } = Array.Empty<double>();
     private double[] LastWavelengths { get; set; } = Array.Empty<double>();
+    private bool IsChart1ZoomLocked { get; set; } = true;
+    private bool IsChart2ZoomLocked { get; set; } = true;
 
     private ElementReference chart1Canvas;
     private ElementReference chart2Canvas;
     private IJSObjectReference? module;
+
+    // Convenience properties that map to the shared service
+    private double SpatialFrequency
+    {
+        get => DesignParameters.SpatialFrequency;
+        set => DesignParameters.SpatialFrequency = value;
+    }
+
+    private double CenterWavelength
+    {
+        get => DesignParameters.CenterWavelength;
+        set => DesignParameters.CenterWavelength = value;
+    }
+
+    private double StartWavelength
+    {
+        get => DesignParameters.StartWavelength;
+        set => DesignParameters.StartWavelength = value;
+    }
+
+    private double EndWavelength
+    {
+        get => DesignParameters.EndWavelength;
+        set => DesignParameters.EndWavelength = value;
+    }
+
+    private double AngleOfIncidence
+    {
+        get => DesignParameters.AngleOfIncidence;
+        set => DesignParameters.AngleOfIncidence = value;
+    }
+
+    private double AngleOfDiffraction
+    {
+        get => DesignParameters.AngleOfDiffraction;
+        set => DesignParameters.AngleOfDiffraction = value;
+    }
+
+    private double BraggTilt
+    {
+        get => DesignParameters.BraggTilt;
+        set => DesignParameters.BraggTilt = value;
+    }
+
+    private double BulkIndex
+    {
+        get => DesignParameters.BulkIndex;
+        set => DesignParameters.BulkIndex = value;
+    }
+
+    private double GlassIndex
+    {
+        get => DesignParameters.GlassIndex;
+        set => DesignParameters.GlassIndex = value;
+    }
+
+    private double DeltaN
+    {
+        get => DesignParameters.DeltaN;
+        set => DesignParameters.DeltaN = value;
+    }
+
+    private double HarmonicOrder
+    {
+        get => DesignParameters.HarmonicOrder;
+        set => DesignParameters.HarmonicOrder = value;
+    }
+
+    private double EffectiveThickness
+    {
+        get => DesignParameters.EffectiveThickness;
+        set => DesignParameters.EffectiveThickness = value;
+    }
+
+    private double ThickFilmThreshold
+    {
+        get => DesignParameters.ThickFilmThreshold;
+        set => DesignParameters.ThickFilmThreshold = value;
+    }
+
+    private string SelectedReadonlyField
+    {
+        get => DesignParameters.SelectedReadonlyField;
+        set => DesignParameters.SelectedReadonlyField = value;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -517,6 +608,22 @@
         if (module is not null)
         {
             await module.InvokeVoidAsync("resetZoomForChart", chartNumber);
+        }
+    }
+
+    private async Task OnChart1ZoomLockChanged()
+    {
+        if (module is not null)
+        {
+            await module.InvokeVoidAsync("setZoomLock", 1, IsChart1ZoomLocked);
+        }
+    }
+
+    private async Task OnChart2ZoomLockChanged()
+    {
+        if (module is not null)
+        {
+            await module.InvokeVoidAsync("setZoomLock", 2, IsChart2ZoomLocked);
         }
     }
 

@@ -147,29 +147,62 @@ header h2 {
     position: relative;
 }
 
-.chart-reset-btn {
+.chart-controls {
     position: absolute;
     bottom: 8px;
     right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+}
+
+.chart-lock-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s, border-color 0.2s;
+    user-select: none;
+}
+
+.chart-lock-label:hover {
+    background-color: #e0e0e0;
+    border-color: #999;
+}
+
+.chart-lock-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+}
+
+.chart-reset-btn {
     padding: 6px 10px;
-    background-color: rgba(100, 181, 246, 0.8);
-    color: white;
-    border: none;
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
-    z-index: 10;
-    transition: background-color 0.2s, opacity 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .chart-reset-btn:hover {
-    background-color: rgba(100, 181, 246, 1);
-    opacity: 1;
+    background-color: #e0e0e0;
+    border-color: #999;
 }
 
 .chart-reset-btn:active {
     transform: scale(0.95);
+    background-color: #d0d0d0;
 }
 
 .reset-buttons {
@@ -212,4 +245,24 @@ footer p {
     margin-top: 10px;
     color: #388e3c;
     font-weight: bold;
+}
+
+.nav-link {
+    margin-bottom: 20px;
+}
+
+.nav-link a {
+    color: #0066cc;
+    text-decoration: none;
+    font-size: 1em;
+    padding: 8px 12px;
+    border: 1px solid #0066cc;
+    border-radius: 4px;
+    display: inline-block;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link a:hover {
+    background-color: #0066cc;
+    color: white;
 }
