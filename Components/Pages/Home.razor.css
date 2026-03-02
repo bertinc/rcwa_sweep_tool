@@ -39,6 +39,12 @@ html, body {
     padding: 0;
 }
 
+html {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 label {
     color: var(--text-primary);
 }
@@ -46,14 +52,37 @@ label {
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 header {
     background-color: var(--bg-secondary);
-    padding: 20px;
+    padding: 10px;
     margin-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
     text-align: center;
+}
+
+header h2 {
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.header-subtitle {
+    margin: 0;
+    padding: 0;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-weight: normal;
 }
 
 .main-container {
@@ -61,6 +90,7 @@ header {
     gap: 30px;
     margin-top: 20px;
     padding: 0 20px;
+    flex: 1;
 }
 
 .design-values {
@@ -75,21 +105,27 @@ header {
 }
 
 .input-field input {
-    max-width: 75px;
+    width: 75px;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
+}
+
+.input-field input[type="radio"] {
+    width: auto;
+    margin-left: 0;
+}
+
+.input-with-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .input-field label {
     width: 180px;
     text-align: right;
     flex-shrink: 0;
-}
-
-.input-field input[type="radio"] {
-    margin: 0 0 0 8px;
-    cursor: pointer;
 }
 
 .unit {
@@ -106,15 +142,31 @@ header {
 }
 
 .chart-wrapper {
-    width: 500px;
+    width: 650px;
     height: 360px;
 }
 
 footer {
     background-color: var(--bg-secondary);
-    padding: 20px;
-    margin-top: 40px;
+    padding: 12px;
+    margin-top: auto;
     border-top: 1px solid var(--border-color);
     text-align: center;
     color: var(--text-secondary);
+}
+
+footer p {
+    margin: 0;
+}
+
+.status-error {
+    margin-top: 10px;
+    color: #d32f2f;
+    font-weight: bold;
+}
+
+.status-success {
+    margin-top: 10px;
+    color: #388e3c;
+    font-weight: bold;
 }

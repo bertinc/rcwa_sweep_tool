@@ -2,114 +2,121 @@
 @implements IAsyncDisposable
 @inject IJSRuntime JS
 
-<header>
-    <h1>RCWA Sweep Tool</h1>
-</header>
+<div class="page-wrapper">
+    <header>
+        <h2>RCWA Sweep Tool</h2>
+        <p class="header-subtitle">Efficiency and Modulation curves using Rigorous Coupled Wave Analysis</p>
+    </header>
 
-<div class="main-container">
-    <div class="design-values">
-        <h2>Design Values</h2>
-        
-        <div class="input-field">
-            <label>Spatial Frequency:</label>
-            <input type="number" id="sf" @bind="SpatialFrequency" @bind:after="OnSpatialFrequencyChanged" step="10" min="100" max="4000" readonly="@(SelectedReadonlyField == "SF")" />
-            <span class="unit">l/mm</span>
-            <input type="radio" name="readonly-field" value="SF" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "SF")" />
+    <div class="main-container">
+        <div class="design-values">
+            <h3>Design Values</h3>
+            
+            <div class="input-field">
+                <label>Spatial Frequency:</label>
+                <div class="input-with-radio">
+                    <input type="number" id="sf" @bind="SpatialFrequency" @bind:after="OnSpatialFrequencyChanged" step="10" min="100" max="4000" readonly="@(SelectedReadonlyField == "SF")" />
+                    <span class="unit">l/mm</span>
+                    <input type="radio" name="readonly-field" value="SF" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "SF")" title="When selected, the spatial frequency will be readonly and auto-calculate." />
+                </div>
+            </div>
+            
+            <div class="input-field">
+                <label>Center Wavelength:</label>
+                <input type="number" id="cw" @bind="CenterWavelength" @bind:after="OnCenterWavelengthChanged" min="300" max="3000" step="10" />
+                <span class="unit">nm</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Start Wavelength:</label>
+                <input type="number" id="sw" @bind="StartWavelength" min="300" max="3000" step="10" />
+                <span class="unit">nm</span>
+            </div>
+            
+            <div class="input-field">
+                <label>End Wavelength:</label>
+                <input type="number" id="ew" @bind="EndWavelength" min="300" max="3000" step="10" />
+                <span class="unit">nm</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Angle of Incidence:</label>
+                <input type="number" id="aoi" @bind="AngleOfIncidence" @bind:after="OnAngleOfIncidenceChanged" step="0.01" />
+                <span class="unit">deg</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Angle of Diffraction:</label>
+                <div class="input-with-radio">
+                    <input type="number" id="aod" @bind="AngleOfDiffraction" @bind:after="OnAngleDiffractionChanged" step="0.01" readonly="@(SelectedReadonlyField == "AOD")" />
+                    <span class="unit">deg</span>
+                    <input type="radio" name="readonly-field" value="AOD" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "AOD")" title="When selected, the angle of diffraction will be readonly and auto-calculate." />
+                </div>
+            </div>
+            
+            <div class="input-field">
+                <label>Bragg Tilt:</label>
+                <input type="number" id="bt" @bind="BraggTilt" step="0.01" readonly />
+                <span class="unit">deg</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Bulk Index:</label>
+                <input type="number" id="bi" @bind="BulkIndex" @bind:after="OnBulkIndexChanged" min="1.00" max="3.00" step="0.01" />
+            </div>
+            
+            <div class="input-field">
+                <label>Glass Index:</label>
+                <input type="number" id="gi" @bind="GlassIndex" min="1.000" max="2.000" step="0.001" />
+            </div>
+            
+            <div class="input-field">
+                <label>Delta n:</label>
+                <input type="number" id="dn" @bind="DeltaN" @bind:after="OnDeltaNChanged" min="0.000" max="0.200" step="0.001" />
+            </div>
+            
+            <div class="input-field">
+                <label>Harmonic Order:</label>
+                <input type="number" id="ho" @bind="HarmonicOrder" min="0" max="1" step="1" />
+            </div>
+            
+            <div class="input-field">
+                <label>Effective Thickness:</label>
+                <input type="number" id="et" @bind="EffectiveThickness" min="3" max="25" step="1" />
+                <span class="unit">µm</span>
+            </div>
+            
+            <div class="input-field">
+                <label>Thick Film Threshold:</label>
+                <input type="number" id="tft" @bind="ThickFilmThreshold" step="0.01" readonly />
+                <span class="unit">µm</span>
+            </div>
+            
+            <div class="input-field" style="justify-content: flex-start;">
+                <button @onclick="RunBothSweeps" style="padding: 8px 16px; margin-top: 10px; margin-left: 188px; cursor: pointer;">
+                    Update Charts
+                </button>
+            </div>
         </div>
         
-        <div class="input-field">
-            <label>Center Wavelength:</label>
-            <input type="number" id="cw" @bind="CenterWavelength" @bind:after="OnCenterWavelengthChanged" min="300" max="3000" step="10" />
-            <span class="unit">nm</span>
-        </div>
-        
-        <div class="input-field">
-            <label>Start Wavelength:</label>
-            <input type="number" id="sw" @bind="StartWavelength" min="300" max="3000" step="10" />
-            <span class="unit">nm</span>
-        </div>
-        
-        <div class="input-field">
-            <label>End Wavelength:</label>
-            <input type="number" id="ew" @bind="EndWavelength" min="300" max="3000" step="10" />
-            <span class="unit">nm</span>
-        </div>
-        
-        <div class="input-field">
-            <label>Angle of Incidence:</label>
-            <input type="number" id="aoi" @bind="AngleOfIncidence" @bind:after="OnAngleOfIncidenceChanged" step="0.01" />
-            <span class="unit">deg</span>
-        </div>
-        
-        <div class="input-field">
-            <label>Angle of Diffraction:</label>
-            <input type="number" id="aod" @bind="AngleOfDiffraction" @bind:after="OnAngleDiffractionChanged" step="0.01" readonly="@(SelectedReadonlyField == "AOD")" />
-            <span class="unit">deg</span>
-            <input type="radio" name="readonly-field" value="AOD" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "AOD")" />
-        </div>
-        
-        <div class="input-field">
-            <label>Bragg Tilt:</label>
-            <input type="number" id="bt" @bind="BraggTilt" step="0.01" readonly />
-            <span class="unit">deg</span>
-        </div>
-        
-        <div class="input-field">
-            <label>Bulk Index:</label>
-            <input type="number" id="bi" @bind="BulkIndex" @bind:after="OnBulkIndexChanged" min="1.00" max="3.00" step="0.01" />
-        </div>
-        
-        <div class="input-field">
-            <label>Glass Index:</label>
-            <input type="number" id="gi" @bind="GlassIndex" min="1.000" max="2.000" step="0.001" />
-        </div>
-        
-        <div class="input-field">
-            <label>Delta n:</label>
-            <input type="number" id="dn" @bind="DeltaN" @bind:after="OnDeltaNChanged" min="0.000" max="0.200" step="0.001" />
-        </div>
-        
-        <div class="input-field">
-            <label>Harmonic Order:</label>
-            <input type="number" id="ho" @bind="HarmonicOrder" min="0" max="1" step="1" />
-        </div>
-        
-        <div class="input-field">
-            <label>Effective Thickness:</label>
-            <input type="number" id="et" @bind="EffectiveThickness" min="3" max="25" step="1" />
-            <span class="unit">µm</span>
-        </div>
-        
-        <div class="input-field">
-            <label>Thick Film Threshold:</label>
-            <input type="number" id="tft" @bind="ThickFilmThreshold" step="0.01" readonly />
-            <span class="unit">µm</span>
-        </div>
-        
-        <div class="input-field" style="justify-content: flex-end;">
-            <button @onclick="RunBothSweeps" style="padding: 8px 16px; margin-top: 10px; cursor: pointer;">
-                Update Charts
-            </button>
+        <div class="charts-container">
+            <div class="chart-wrapper">
+                <canvas @ref="chart1Canvas"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <canvas @ref="chart2Canvas"></canvas>
+            </div>
         </div>
     </div>
-    
-    <div class="charts-container">
-        <div class="chart-wrapper">
-            <canvas @ref="chart1Canvas"></canvas>
-        </div>
-        <div class="chart-wrapper">
-            <canvas @ref="chart2Canvas"></canvas>
-        </div>
-    </div>
+
+    <footer>
+        <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
+        @if (!string.IsNullOrEmpty(StatusMessage))
+        {
+            <p class="@(IsError ? "status-error" : "status-success")">@StatusMessage</p>
+        }
+    </footer>
 </div>
-
-<footer>
-    <p>RCWA Sweep Tool v@(Constants.Version) - Free and Open Source</p>
-    @if (!string.IsNullOrEmpty(StatusMessage))
-    {
-        <p style="margin-top: 10px; color: @(IsError ? "#d32f2f" : "#388e3c"); font-weight: bold;">@StatusMessage</p>
-    }
-</footer>
 
 @code {
     private double SpatialFrequency { get; set; } = 1200;
@@ -185,6 +192,13 @@
     {
         try
         {
+            if (module is null)
+            {
+                StatusMessage = "Module not initialized";
+                IsError = true;
+                return;
+            }
+
             // Allocate arrays for results (adjust size as needed based on your DLL)
             int step = 1;
             int array_size = (int)((double)(EndWavelength - StartWavelength) / (double)step) + 1;
@@ -227,7 +241,7 @@
             }
 
             // Update the chart with new data and pass current DeltaN for the vertical line
-            await module.InvokeVoidAsync("updateDiffractionEfficiencyChart", wavelengths, returnSPol, returnPPol);
+            await module.InvokeVoidAsync("updateDiffractionEfficiencyChart", wavelengths, returnSPol, returnPPol, CenterWavelength);
         }
         catch (Exception ex)
         {
@@ -240,6 +254,13 @@
     {
         try
         {
+            if (module is null)
+            {
+                StatusMessage = "Module not initialized";
+                IsError = true;
+                return -1;
+            }
+
             // Display all input parameters before calling the DLL
             double startDelta = 0.0;
             double stopDelta = 0.15;

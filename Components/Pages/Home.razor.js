@@ -213,7 +213,7 @@ function createCharts(canvas1, canvas2) {
     });
 }
 
-export function updateDiffractionEfficiencyChart(wavelengths, spoData, ppData) {
+export function updateDiffractionEfficiencyChart(wavelengths, spoData, ppData, centerWavelength) {
     if (chart1) {
         // Create wavelength labels formatted to 2 decimal places
         const wavelengthLabels = wavelengths.map(w => w.toFixed(2));
@@ -225,6 +225,59 @@ export function updateDiffractionEfficiencyChart(wavelengths, spoData, ppData) {
         chart1.data.datasets[0].data = spoData;
         chart1.data.datasets[1].data = ppData;
         chart1.data.datasets[2].data = averageData;
+        
+        // Find the index of the closest wavelength to center wavelength
+        let closestIndex = 0;
+        let minDistance = Math.abs(wavelengths[0] - centerWavelength);
+        for (let i = 1; i < wavelengths.length; i++) {
+            const distance = Math.abs(wavelengths[i] - centerWavelength);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = i;
+            }
+        }
+        
+        // Remove existing plugin
+        if (chart1.options.plugins.customLine) {
+            delete chart1.options.plugins.customLine;
+        }
+        
+        // Add custom plugin to draw vertical line for center wavelength
+        chart1.options.plugins.customLine = {
+            closestIndex: closestIndex,
+            id: 'customLine'
+        };
+        
+        // Register or update the custom plugin
+        const customLinePlugin = {
+            id: 'customLine',
+            afterDatasetsDraw(chart) {
+                const closestIndex = chart.options.plugins.customLine?.closestIndex;
+                if (closestIndex === undefined) return;
+                
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                const ctx = chart.ctx;
+                
+                // Get pixel position for the closest index
+                const xPixel = xScale.getPixelForValue(closestIndex);
+                
+                if (xPixel !== undefined && !isNaN(xPixel)) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgb(255, 0, 0)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(xPixel, yScale.top);
+                    ctx.lineTo(xPixel, yScale.bottom);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        };
+        
+        // Unregister if it exists, then register fresh
+        Chart.unregister(customLinePlugin);
+        Chart.register(customLinePlugin);
         
         chart1.update();
     } else {

@@ -12,8 +12,8 @@
             return new Window(new MainPage()) 
             { 
                 Title = "RCWA_Sweep_Tool",
-                Width = 1080,
-                Height = 1100
+                Width = 1200,
+                Height = 980
             };
         }
     }
