@@ -156,6 +156,95 @@ dotnet run
 dotnet build -c Release
 ```
 
+## Publishing and Distribution
+
+### Publishing for Windows
+
+The application is configured to publish for Windows 10+ (x64 architecture). The published files are output to `bin\Publish\` with the following structure:
+
+```
+bin\Publish\
+├── RCWA_Sweep_Tool.bat       ← Run this to start the app
+└── AppFiles\
+    ├── RCWA_Sweep_Tool.exe
+    ├── wwwroot\               # Web assets (CSS, JavaScript)
+    └── [dependencies]         # All required runtime files
+```
+
+### How to Publish
+
+**Option 1: Using the Command Line**
+
+```bash
+# Publish the Release build
+dotnet publish -f net10.0-windows10.0.19041.0 -c Release
+```
+
+The output will be in: `bin\Publish\`
+
+**Option 2: Using Visual Studio**
+
+1. Right-click the project in Solution Explorer
+2. Select **Publish**
+3. Configure the publish profile for Windows x64
+4. Click **Publish**
+
+### Prerequisites for Running Published App
+
+- **Windows 10** (version 17763) or later, x64
+- **.NET 10 Runtime** (must be installed on user's machine)
+  - Download from: https://dotnet.microsoft.com/download/dotnet
+
+### How to Run the Published App
+
+1. **Extract the published folder:**
+   - Navigate to `bin\Publish\`
+   - Copy the entire folder to the desired location (e.g., Program Files)
+
+2. **Launch the app:**
+   - Double-click `RCWA_Sweep_Tool.bat`
+   - The application window will open
+
+### Distributing to Users
+
+1. **Create a distribution package:**
+   ```bash
+   # Publish the app
+   dotnet publish -f net10.0-windows10.0.19041.0 -c Release
+   
+   # Zip the bin\Publish\ folder
+   # On Windows PowerShell:
+   Compress-Archive -Path bin\Publish -DestinationPath RCWA_Sweep_Tool.zip
+   ```
+
+2. **Share with users:**
+   - Provide the `RCWA_Sweep_Tool.zip` file
+   - Include instructions to:
+     1. Install .NET 10 Runtime (if not already installed)
+     2. Extract the ZIP file
+     3. Run `RCWA_Sweep_Tool.bat`
+
+3. **User installation instructions:**
+   ```
+   1. Download and install .NET 10 Runtime from:
+      https://dotnet.microsoft.com/download/dotnet
+   
+   2. Extract the RCWA_Sweep_Tool.zip file
+   
+   3. Navigate to the extracted folder
+   
+   4. Double-click RCWA_Sweep_Tool.bat to run the application
+   ```
+
+### Build Configuration Details
+
+The Release build is configured with the following optimizations in `RCWA_Sweep_Tool.csproj`:
+
+- **Trimming**: Partial trimming enabled to reduce output size
+- **Debug Symbols**: Removed to reduce file size
+- **R2R (Ready2Run)**: Native images pre-compiled for faster startup
+- **Publish Directory**: `bin\Publish\AppFiles\` (launcher batch file copied to parent)
+
 ## Dependencies
 
 - **Microsoft.Maui**: Core MAUI framework

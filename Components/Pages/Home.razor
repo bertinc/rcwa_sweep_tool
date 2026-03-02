@@ -12,26 +12,26 @@
         
         <div class="input-field">
             <label>Spatial Frequency:</label>
-            <input type="number" id="sf" @bind="SpatialFrequency" step="0.01" readonly="@(SelectedReadonlyField == "SF")" />
+            <input type="number" id="sf" @bind="SpatialFrequency" step="10" min="100" max="4000" readonly="@(SelectedReadonlyField == "SF")" />
             <span class="unit">l/mm</span>
             <input type="radio" name="readonly-field" value="SF" @onchange="@((ChangeEventArgs e) => SelectedReadonlyField = e.Value?.ToString() ?? "")" checked="@(SelectedReadonlyField == "SF")" />
         </div>
         
         <div class="input-field">
             <label>Center Wavelength:</label>
-            <input type="number" id="cw" @bind="CenterWavelength" step="0.01" />
+            <input type="number" id="cw" @bind="CenterWavelength" min="300" max="3000" step="10" />
             <span class="unit">nm</span>
         </div>
         
         <div class="input-field">
             <label>Start Wavelength:</label>
-            <input type="number" id="sw" @bind="StartWavelength" step="0.01" />
+            <input type="number" id="sw" @bind="StartWavelength" min="300" max="3000" step="10" />
             <span class="unit">nm</span>
         </div>
         
         <div class="input-field">
             <label>End Wavelength:</label>
-            <input type="number" id="ew" @bind="EndWavelength" step="0.01" />
+            <input type="number" id="ew" @bind="EndWavelength" min="300" max="3000" step="10" />
             <span class="unit">nm</span>
         </div>
         
@@ -56,33 +56,33 @@
         
         <div class="input-field">
             <label>Bulk Index:</label>
-            <input type="number" id="bi" @bind="BulkIndex" step="0.01" />
+            <input type="number" id="bi" @bind="BulkIndex" min="1.00" max="3.00" step="0.01" />
         </div>
         
         <div class="input-field">
             <label>Glass Index:</label>
-            <input type="number" id="gi" @bind="GlassIndex" step="0.01" />
+            <input type="number" id="gi" @bind="GlassIndex" min="1.000" max="2.000" step="0.001" />
         </div>
         
         <div class="input-field">
             <label>Delta n:</label>
-            <input type="number" id="dn" @bind="DeltaN" @bind:after="OnDeltaNChanged" step="0.01" />
+            <input type="number" id="dn" @bind="DeltaN" @bind:after="OnDeltaNChanged" min="0.000" max="0.200" step="0.001" />
         </div>
         
         <div class="input-field">
             <label>Harmonic Order:</label>
-            <input type="number" id="ho" @bind="HarmonicOrder" step="1" />
+            <input type="number" id="ho" @bind="HarmonicOrder" min="0" max="1" step="1" />
         </div>
         
         <div class="input-field">
             <label>Effective Thickness:</label>
-            <input type="number" id="et" @bind="EffectiveThickness" step="0.01" />
+            <input type="number" id="et" @bind="EffectiveThickness" min="3" max="25" step="1" />
             <span class="unit">µm</span>
         </div>
         
         <div class="input-field">
             <label>Thick Threshold:</label>
-            <input type="number" id="tt" @bind="ThickThreshold" step="0.01" />
+            <input type="number" id="tt" @bind="ThickThreshold" step="0.01" readonly />
             <span class="unit">µm</span>
         </div>
         
@@ -159,6 +159,22 @@
         if (optimalDelta >= 0)
         {
             DeltaN = optimalDelta;
+            // Update the modulation chart to show the red line at the new DeltaN position
+            if (module is not null && LastReturnSPol.Length > 0)
+            {
+                double startDelta = 0.0;
+                double stopDelta = 0.15;
+                double stepDelta = (stopDelta - startDelta) / 200;
+                int array_size = (int)((stopDelta - startDelta) / stepDelta) + 1;
+                
+                double[] deltaArray = new double[array_size];
+                for (int i = 0; i < array_size; i++)
+                {
+                    deltaArray[i] = startDelta + (i * stepDelta);
+                }
+                
+                await module.InvokeVoidAsync("updateModulationCurvesChart", deltaArray, LastReturnSPol, LastReturnPPol, DeltaN);
+            }
         }
         
         // Run wavelength sweep with the optimized DeltaN
@@ -253,6 +269,10 @@
                 returnPPol
             );
 
+            // Store modulation results for potential re-render
+            LastReturnSPol = returnSPol;
+            LastReturnPPol = returnPPol;
+
             // Generate delta array
             double[] deltaArray = new double[array_size];
             for (int i = 0; i < array_size; i++)
@@ -260,12 +280,20 @@
                 deltaArray[i] = startDelta + (i * stepDelta);
             }
 
-            // Find the crossing with the highest value first
-            int highestCrossingIndex = FindHighestValueCrossing(returnSPol, returnPPol);
-            double optimalDelta = -1;
-            if (highestCrossingIndex >= 0)
+            // Find the crossing with the highest/lowest value depending on harmonic order
+            int crossingIndex = -1;
+            if (HarmonicOrder == 0)
             {
-                optimalDelta = deltaArray[highestCrossingIndex];
+                crossingIndex = FindLowestValueCrossing(returnSPol, returnPPol);
+            }
+            else
+            {
+                crossingIndex = FindHighestValueCrossing(returnSPol, returnPPol);
+            }
+            double optimalDelta = -1;
+            if (crossingIndex >= 0)
+            {
+                optimalDelta = deltaArray[crossingIndex];
             }
 
             // Update modulation curves chart with new data and current Delta N position
@@ -312,6 +340,35 @@
         }
         
         return highestCrossingIndex;
+    }
+
+    private int FindLowestValueCrossing(double[] array1, double[] array2)
+    {
+        int lowestCrossingIndex = -1;
+        double lowestValue = double.MaxValue;
+        
+        // Find all crossings between the two arrays
+        for (int i = 0; i < array1.Length - 1; i++)
+        {
+            // Check if there's a crossing between point i and i+1
+            // A crossing occurs when the difference changes sign
+            double diff1 = array1[i] - array2[i];
+            double diff2 = array1[i + 1] - array2[i + 1];
+            
+            // If signs are different (diff1 * diff2 < 0), there's a crossing
+            if (diff1 * diff2 < 0)
+            {
+                // Find the lowest value at this crossing point
+                double maxAtCrossing = Math.Max(array1[i], array2[i]);
+                if (maxAtCrossing < lowestValue)
+                {
+                    lowestValue = maxAtCrossing;
+                    lowestCrossingIndex = i;
+                }
+            }
+        }
+        
+        return lowestCrossingIndex;
     }
 
     private void OnDeltaNChanged()
