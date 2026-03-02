@@ -4,15 +4,47 @@ A cross-platform .NET MAUI application for performing Rigorous Coupled-Wave Anal
 
 ## Overview
 
-RCWA Sweep Tool is a multi-platform desktop application built with .NET MAUI that provides a user-friendly interface for optical and photonic simulations. It leverages native RCWA computation libraries to perform wavelength and modulation sweep analyses.
+RCWA Sweep Tool is a multi-platform desktop application built with .NET MAUI that provides a user-friendly interface for optical and photonic simulations. It leverages native RCWA computation libraries to perform wavelength and modulation sweep analyses with interactive visualization and analysis capabilities.
 
 ## Features
 
-- **Cross-Platform Support**: Runs on Android, iOS, macOS, and Windows
+### Core Analysis
 - **Wavelength Sweep Analysis**: Perform spectral analysis across a range of wavelengths
-- **Modulation Sweep Analysis**: Analyze optical properties across modulation parameter ranges
+- **Modulation Sweep Analysis**: Analyze optical properties across index modulation (ΔN) ranges
+- **Automatic Optimization**: Intelligently finds optimal ΔN values that maximize modulation efficiency
 - **Native Performance**: Utilizes native DLL for high-performance computations
-- **Intuitive UI**: Clean and responsive interface built with .NET MAUI
+
+### Interactive Charts
+- **Dual Chart Display**: Simultaneous visualization of efficiency curves and modulation curves
+- **Dynamic Titles**: Charts display real-time efficiency percentages and optimal values
+- **Vertical Reference Lines**: Red lines mark center wavelength and current Delta N positions
+- **Zoom Capability**: Scroll mouse wheel to zoom in/out on charts
+- **Touch Support**: Pinch zoom on touch devices
+- **Reset Controls**: Dedicated ↺ buttons in bottom-right corner of each chart for quick reset
+- **Three-Line Analysis**: S-Pol, P-Pol, and Average efficiency curves simultaneously
+
+### Intelligent Parameter Management
+- **Auto-Calculated Fields**: 
+  - Spatial Frequency (SF) - auto-calculates from angles and wavelength
+  - Angle of Diffraction (AOD) - auto-calculates from grating equation
+  - Bragg Tilt - auto-calculates from incidence/diffraction angles
+  - Thick Film Threshold - auto-calculates for optical design constraints
+- **Dependency Tracking**: Parameters automatically update based on which field is set as readonly
+- **Real-Time Validation**: Start/End wavelengths adjust automatically relative to center wavelength
+
+### User Interface
+- **Professional Design**: Clean, modern UI with dark mode support
+- **Responsive Layout**: Input controls on left, interactive charts on right
+- **Persistent Footer**: Status messages and version information always visible
+- **Intuitive Controls**: 
+  - Radio buttons to toggle readonly fields
+  - Helpful tooltips on key controls
+  - Consistent styling across all inputs
+
+### Cross-Platform Support
+- Runs on Windows, macOS, iOS, and Android
+- Respects system dark mode preferences
+- Responsive layout adapts to different screen sizes
 
 ## System Requirements
 
@@ -82,39 +114,102 @@ RCWA Sweep Tool is a multi-platform desktop application built with .NET MAUI tha
 
 The application interfaces with `rcwa_dll.dll` through P/Invoke for performance-critical computations:
 
-- `wavelength_sweep()`: Analyzes reflectivity across wavelength ranges
+- `wavelength_sweep()`: Analyzes reflectivity across wavelength ranges (S-Pol and P-Pol)
 - `modulation_sweep()`: Analyzes reflectivity across modulation parameter ranges
+
+### Frontend Components
+
+- **`Home.razor`**: Blazor component containing the main UI with input controls and chart containers
+- **`Home.razor.css`**: Responsive styling with dark mode support using CSS variables
+- **`Home.razor.js`**: JavaScript module for Chart.js integration with:
+  - Dual interactive charts using Chart.js library
+  - Custom plugins for vertical reference lines
+  - Zoom plugin for interactive data exploration
+  - Real-time chart updates with title calculations
+
+### Calculation Engine
+
+- **`Calc.cs`**: Mathematical utility functions for optical calculations
+  - `Precision()`: Consistent rounding across all numeric values
+  - `GetSpatialFrequency()`: Calculates SF from angles and wavelength
+  - `GetAOD()`: Grating equation solver for angle of diffraction
+  - `GetBraggTilt()`: Calculates Bragg tilt from incident/diffracted angles
+  - `GetThickFilmThreshold()`: Determines optical design constraint thickness
+  - `GetSymetricAngles()`: Calculates symmetric incidence/diffraction angles
+  - Trigonometric conversion utilities
+
+- **`Constants.cs`**: Centralized constant management
+  - Version information
+  - Precision settings for each parameter type (SF_SIG, AOD_SIG, DELTA_SIG, etc.)
+  - Safety margins and constraints
+
+## Technical Stack
+
+- **Framework**: .NET MAUI 10
+- **Language**: C# 14.0
+- **Frontend**: Blazor Web Components with Chart.js
+- **Charts**: Chart.js with zoom plugin for interactive visualization
+- **Native Integration**: P/Invoke for Windows RCWA DLL
+- **Styling**: CSS with CSS custom properties for theming
+- **Version Control**: Git
 
 ## Usage
 
-### Wavelength Sweep
+### Basic Workflow
 
-1. Configure optical parameters:
-   - Spatial frequency
-   - Effective thickness
-   - Refractive index modulation (ΔN)
-   - Bulk and glass indices
-   - Bragg tilt angle
-   - Harmonic order
+1. **Configure Optical Design Parameters**:
+   - Spatial Frequency (l/mm) - or set as readonly to auto-calculate
+   - Center Wavelength (nm) - primary design wavelength
+   - Angle of Incidence (deg) - or let system calculate from grating equation
+   - Angle of Diffraction (deg) - or set as readonly to auto-calculate
+   - Bulk Index (n) - substrate refractive index
+   - Glass Index (n) - optical element refractive index
+   - Delta N (Δn) - refractive index modulation depth (0.000-0.200)
+   - Harmonic Order - diffraction order (0 or 1)
+   - Effective Thickness (µm) - grating thickness
+   - Start/End Wavelength (nm) - analysis range
 
-2. Define wavelength range:
-   - Center wavelength
-   - Start and stop wavelengths
-   - Step size
+2. **Review Auto-Calculated Values**:
+   - Bragg Tilt automatically updates when angles change
+   - Thick Film Threshold shows optical design constraint
+   - System validates parameter dependencies
 
-3. Set incident angle (θ)
+3. **Run Analysis**:
+   - Click **"Update Charts"** button to perform both sweeps
+   - Modulation sweep runs first to find optimal ΔN value
+   - If an optimal crossing is found, ΔN automatically updates
+   - Wavelength sweep runs with optimized ΔN value
 
-4. Execute sweep to obtain S and P polarization reflectivity data
+4. **Analyze Results**:
+   - **Left Chart (Efficiency Curves)**:
+     - Shows S-Pol (dashed red), P-Pol (dashed blue), and Average (green) efficiency curves
+     - Red vertical line marks center wavelength
+     - Title displays average efficiency % at center wavelength
+     - Zoom with mouse wheel to inspect specific wavelength regions
+   - **Right Chart (Modulation Curves)**:
+     - Shows S-Pol and P-Pol efficiency across Delta N range (0.0-0.15)
+     - Red vertical line shows current Delta N value
+     - Title displays optimal ΔN value from crossing analysis
+     - Useful for finding modulation balance between polarizations
 
-### Modulation Sweep
+5. **Explore Charts**:
+   - **Zoom In**: Scroll mouse wheel on chart area
+   - **Zoom Out**: Scroll mouse wheel opposite direction
+   - **Reset Zoom**: Click ↺ button in bottom-right corner of chart
+   - **Touch Devices**: Pinch to zoom
 
-1. Configure optical parameters (same as wavelength sweep)
+### Parameter Dependencies
 
-2. Define modulation range:
-   - Start and stop ΔN values
-   - Step size
+The tool intelligently manages parameter relationships:
 
-3. Execute sweep to analyze modulation response
+- **When SF is Readonly**: Spatial Frequency auto-calculates from angles and wavelength
+- **When AOD is Readonly**: Angle of Diffraction auto-calculates from grating equation
+- Both modes work independently - choose which constraint makes sense for your design
+- Bragg Tilt, Thick Film Threshold, and other derived values update automatically
+
+### Dark Mode
+
+The application automatically respects your system's dark mode preference. If you have dark mode enabled, the interface will use dark colors; otherwise, it uses light colors.
 
 ## Development
 
